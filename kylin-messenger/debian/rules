@@ -1,0 +1,19 @@
+#!/usr/bin/make -f
+# debian/rules for kylin-messenger
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DENABLE_AI_FEATURES=ON \
+		-DBUILD_TESTS=OFF \
+		-DCMAKE_INSTALL_PREFIX=/usr
+
+override_dh_auto_test:
+	# Skip tests during package build
+	@echo "Skipping tests for package build"
+
+override_dh_strip:
+	dh_strip --dbg-package=kylin-messenger-dbg

@@ -1,0 +1,72 @@
+# Build directories
+build/
+build-*/
+cmake-build-*/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Compiled files
+*.o
+*.so
+*.a
+*.dylib
+*.exe
+
+# Binary output
+bin/
+lib/
+
+# CMake files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+!cmake/*.cmake
+!cmake/*.cmake.in
+
+# Testing
+Testing/
+CTestTestfile.cmake
+
+# Model files (too large)
+*.rknn
+*.onnx
+*.pth
+*.pt
+*.bin
+*.safetensors
+tokenizer.model
+tokenizer.json
+
+# Logs
+*.log
+
+# Package files
+*.tar.gz
+*.zip
+*.deb
+*.rpm
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+env/
+
+# Documentation build
+docs/_build/
+docs/html/
+docs/latex/
+
+# OS files
+.DS_Store
+Thumbs.db

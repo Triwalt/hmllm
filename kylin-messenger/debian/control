@@ -1,0 +1,44 @@
+Source: kylin-messenger
+Section: net
+Priority: optional
+Maintainer: Kylin Messenger Team <your.email@example.com>
+Build-Depends: debhelper (>= 10),
+               cmake (>= 3.16),
+               qt6-base-dev,
+               qt6-tools-dev,
+               libqt6core6,
+               libqt6widgets6,
+               libqt6network6,
+               zlib1g-dev
+Standards-Version: 4.5.0
+Homepage: https://github.com/yourusername/kylin-messenger
+
+Package: kylin-messenger
+Architecture: arm64
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         libqt6core6,
+         libqt6widgets6,
+         libqt6network6,
+         zlib1g
+Recommends: librknnrt
+Suggests: libllm-rknn
+Description: P2P LAN Messenger with AI Features
+ Kylin Messenger is a modern peer-to-peer local area network messenger
+ application designed for Rockchip development boards and Kylin OS.
+ .
+ Features:
+  * Serverless P2P communication
+  * Automatic user discovery via UDP broadcast
+  * Reliable TCP messaging and file transfer
+  * NPU-accelerated AI features:
+    - AI chat assistant
+    - Intelligent image tagging
+    - Smart reply suggestions
+    - Content filtering
+  * Modern Qt6 interface
+  * Built-in screenshot tool
+  * Emoji support
+  * System tray integration
+ .
+ This package provides the main application executable and resources.

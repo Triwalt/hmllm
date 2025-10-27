@@ -1,0 +1,15 @@
+kylin-messenger (1.0.0) unstable; urgency=medium
+
+  * Initial release
+  * P2P network communication with automatic user discovery
+  * TCP reliable messaging and file transfer
+  * AI chat assistant with NPU acceleration
+  * Intelligent image tagging using YOLO
+  * Smart reply suggestions
+  * Content filtering and safety checks
+  * Modern Qt6 interface
+  * System tray integration
+  * Screenshot tool
+  * Emoji support
+
+ -- Kylin Messenger Team <your.email@example.com>  Thu, 09 Oct 2025 10:00:00 +0800

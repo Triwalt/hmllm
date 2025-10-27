@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Kylin Messenger
+Name[zh_CN]=麒麟信使
+Comment=P2P LAN Messenger with AI Features
+Comment[zh_CN]=集成AI功能的P2P局域网通讯工具
+Exec=kylin-messenger
+Icon=kylin-messenger
+Terminal=false
+Categories=Network;InstantMessaging;Qt;
+Keywords=messenger;chat;IM;AI;P2P;
+StartupNotify=true
+StartupWMClass=kylin-messenger
