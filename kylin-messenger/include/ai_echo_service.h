@@ -3,6 +3,8 @@
 #define KYLIN_MESSENGER_AI_ECHO_SERVICE_H
 
 #include "ai_service.h"
+#include <atomic>
+#include <thread>
 
 namespace KylinMessenger {
 
@@ -19,26 +21,18 @@ public:
     virtual ~EchoAIService() override;
     
     // IAIService接口实现
-    virtual bool initialize(const std::string& model_path) override;
+    virtual bool initialize(const std::string& model_path, const std::string& config_path = "") override;
     virtual void shutdown() override;
-    virtual bool isInitialized() const override;
-    
+    virtual bool isReady() const override;
+    virtual std::string getName() const override;
+    virtual std::string getDescription() const override;
     virtual AICapability getCapabilities() const override;
     
-    virtual AIResult processText(const std::string& input) override;
-    virtual AIResult processImage(const QImage& image) override;
-    
-    virtual void processTextAsync(
-        const std::string& input,
-        AICallback callback) override;
-    
-    virtual void processImageAsync(
-        const QImage& image,
-        AICallback callback) override;
-    
-    virtual AIResult processTextStream(
-        const std::string& input,
-        AIStreamCallback stream_callback) override;
+    virtual AIResult processText(const std::string& input, const std::string& context = "") override;
+    virtual AIResult processTextStream(const std::string& input, AIStreamCallback callback, const std::string& context = "") override;
+    virtual AIResult processImage(const QImage& image, const std::string& task = "detect") override;
+    virtual void processTextAsync(const std::string& input, AICallback callback, const std::string& context = "") override;
+    virtual void processImageAsync(const QImage& image, AICallback callback, const std::string& task = "detect") override;
     
     virtual AIResult generateSmartReplies(
         const std::vector<std::string>& conversation_history,
@@ -46,9 +40,11 @@ public:
     
     virtual AIResult analyzeContent(
         const std::string& content,
-        ContentAnalysisType type) override;
-    
+        ContentAnalysisType type = ContentAnalysisType::Sentiment) override;
+
     virtual bool cancelOperation() override;
+    
+    virtual void resetContext() override;
     
 private:
     bool m_initialized;

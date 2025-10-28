@@ -12,8 +12,8 @@ AIServiceFactory::getRegistry()
     static bool initialized = false;
     
     if (!initialized) {
-        registerBuiltinServices();
         initialized = true;
+        registerBuiltinServices();
     }
     
     return registry;

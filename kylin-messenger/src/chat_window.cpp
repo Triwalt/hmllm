@@ -3,8 +3,15 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QScrollBar>
+#include <QRegularExpression>
 #include <QUuid>
+#include <QBuffer>
 #include <QDebug>
+#include <QCloseEvent>
+#include <QEvent>
+#include <QTextCursor>
+#include <QTextDocument>
+#include <QTextBlockFormat>
 
 namespace KylinMessenger {
 
@@ -23,14 +30,17 @@ ChatWindow::ChatWindow(const UserInfo& peer_info, QWidget* parent)
     , m_typing_timer(new QTimer(this))
     , m_is_typing(false)
     , m_is_ai_chat(peer_info.user_id == "ai_assistant")
+    , m_is_loopback(peer_info.user_id == "loopback")
 {
+    setAttribute(Qt::WA_DeleteOnClose);
+    setWindowFlag(Qt::Window, true);
+    setWindowIcon(QIcon(":/icons/app_icon.png"));
+    setWindowTitle(QStringLiteral("聊天 - %1").arg(peer_info.username));
+
     setupUI();
     setupConnections();
-    
-    setWindowTitle(QString("聊天 - %1").arg(
-        QString::fromStdString(peer_info.username)));
-    
-    resize(600, 500);
+
+    resize(720, 560);
 }
 
 ChatWindow::~ChatWindow()
@@ -61,8 +71,7 @@ void ChatWindow::setupUI()
     m_toolbar = new QToolBar(this);
     
     // 对方信息
-    m_peer_name_label = new QLabel(
-        QString::fromStdString(m_peer_info.username), this);
+    m_peer_name_label = new QLabel(m_peer_info.username, this);
     m_peer_name_label->setStyleSheet(
         "QLabel { font-weight: bold; font-size: 14px; padding: 5px; }");
     m_toolbar->addWidget(m_peer_name_label);
@@ -181,11 +190,11 @@ void ChatWindow::onSendMessage()
     // 如果是AI聊天
     if (m_is_ai_chat && m_ai_service) {
         // 显示用户消息
-        ChatMessage user_msg;
-        user_msg.message_id = QUuid::createUuid().toString().toStdString();
-        user_msg.sender_id = "user";
-        user_msg.content = text.toStdString();
-        user_msg.timestamp = QDateTime::currentDateTime();
+    ChatMessage user_msg;
+    user_msg.message_id = QUuid::createUuid().toString();
+    user_msg.sender_id = QStringLiteral("user");
+    user_msg.content = text;
+    user_msg.timestamp = QDateTime::currentDateTime();
         
         addMessageToDisplay(user_msg, true);
         m_message_history.push_back(user_msg);
@@ -197,7 +206,7 @@ void ChatWindow::onSendMessage()
             "</div>");
         
         // 异步处理AI响应
-        std::string input = text.toStdString();
+    std::string input = text.toStdString();
         m_ai_service->processTextAsync(input, 
             [this](const AIResult& result) {
                 // 在主线程中更新UI
@@ -213,9 +222,9 @@ void ChatWindow::onSendMessage()
                     
                     // 显示AI响应
                     ChatMessage ai_msg;
-                    ai_msg.message_id = QUuid::createUuid().toString().toStdString();
-                    ai_msg.sender_id = "ai_assistant";
-                    ai_msg.content = result.text_output;
+                    ai_msg.message_id = QUuid::createUuid().toString();
+                    ai_msg.sender_id = QStringLiteral("ai_assistant");
+                    ai_msg.content = QString::fromStdString(result.text_output);
                     ai_msg.timestamp = QDateTime::currentDateTime();
                     
                     addMessageToDisplay(ai_msg, false);
@@ -225,7 +234,7 @@ void ChatWindow::onSendMessage()
                     if (m_ai_service->getCapabilities() & AICapability::SmartReply) {
                         std::vector<std::string> history_text;
                         for (const auto& msg : m_message_history) {
-                            history_text.push_back(msg.content);
+                            history_text.push_back(msg.content.toStdString());
                         }
                         
                         auto reply_result = m_ai_service->generateSmartReplies(
@@ -238,6 +247,9 @@ void ChatWindow::onSendMessage()
                     }
                 }, Qt::QueuedConnection);
             });
+    }
+    else if (m_is_loopback) {
+        sendLoopbackMessage(text);
     }
     else {
         // 普通P2P消息
@@ -256,15 +268,14 @@ void ChatWindow::sendTextMessage(const QString& text)
     }
     
     ChatMessage message;
-    message.message_id = QUuid::createUuid().toString().toStdString();
-    message.sender_id = "local"; // 将被网络管理器替换
+    message.message_id = QUuid::createUuid().toString();
+    message.sender_id = QStringLiteral("local"); // 将被网络管理器替换
     message.receiver_id = m_peer_info.user_id;
     message.message_type = MessageContentType::PlainText;
-    message.content = text.toStdString();
+    message.content = text;
     message.timestamp = QDateTime::currentDateTime();
     
-    if (m_network_manager->sendMessage(
-            QString::fromStdString(m_peer_info.user_id), message)) {
+    if (m_network_manager->sendMessage(m_peer_info.user_id, message)) {
         addMessageToDisplay(message, true);
         m_message_history.push_back(message);
     } else {
@@ -287,18 +298,40 @@ void ChatWindow::sendImageMessage(const QImage& image)
     QString base64_image = QString::fromLatin1(image_data.toBase64());
     
     ChatMessage message;
-    message.message_id = QUuid::createUuid().toString().toStdString();
-    message.sender_id = "local";
+    message.message_id = QUuid::createUuid().toString();
+    message.sender_id = QStringLiteral("local");
     message.receiver_id = m_peer_info.user_id;
     message.message_type = MessageContentType::Image;
-    message.content = base64_image.toStdString();
+    message.content = base64_image;
     message.timestamp = QDateTime::currentDateTime();
     
-    m_network_manager->sendMessage(
-        QString::fromStdString(m_peer_info.user_id), message);
+    m_network_manager->sendMessage(m_peer_info.user_id, message);
     
     addMessageToDisplay(message, true);
     m_message_history.push_back(message);
+}
+
+void ChatWindow::sendLoopbackMessage(const QString& text)
+{
+    ChatMessage outgoing;
+    outgoing.message_id = QUuid::createUuid().toString();
+    outgoing.sender_id = QStringLiteral("local-loop");
+    outgoing.receiver_id = m_peer_info.user_id;
+    outgoing.message_type = MessageContentType::PlainText;
+    outgoing.content = text;
+    outgoing.timestamp = QDateTime::currentDateTime();
+
+    addMessageToDisplay(outgoing, true);
+    m_message_history.push_back(outgoing);
+
+    ChatMessage echo = outgoing;
+    echo.message_id = QUuid::createUuid().toString();
+    echo.sender_id = m_peer_info.user_id;
+    echo.receiver_id = QStringLiteral("local-loop");
+    echo.timestamp = QDateTime::currentDateTime();
+
+    addMessageToDisplay(echo, false);
+    m_message_history.push_back(echo);
 }
 
 void ChatWindow::addReceivedMessage(const ChatMessage& message)
@@ -311,7 +344,7 @@ void ChatWindow::addReceivedMessage(const ChatMessage& message)
         (m_ai_service->getCapabilities() & AICapability::SmartReply)) {
         std::vector<std::string> history_text;
         for (const auto& msg : m_message_history) {
-            history_text.push_back(msg.content);
+            history_text.push_back(msg.content.toStdString());
         }
         
         auto result = m_ai_service->generateSmartReplies(history_text, 3);
@@ -325,41 +358,51 @@ void ChatWindow::addMessageToDisplay(const ChatMessage& message, bool is_sent)
 {
     QString time_str = formatMessageTime(message.timestamp);
     QString content = formatMessageContent(message);
-    
-    QString alignment = is_sent ? "right" : "left";
-    QString bg_color = is_sent ? "#dcf8c6" : "#ffffff";
-    QString name = is_sent ? "我" : 
-        QString::fromStdString(m_peer_info.username);
-    
-    QString html = QString(
-        "<div style='text-align: %1; margin: 10px 0;'>"
-        "  <div style='"
-        "    display: inline-block;"
-        "    background-color: %2;"
-        "    border-radius: 10px;"
-        "    padding: 10px 15px;"
-        "    max-width: 70%%;"
-        "    box-shadow: 0 1px 2px rgba(0,0,0,0.1);"
-        "  '>"
-        "    <div style='font-weight: bold; color: #333; margin-bottom: 5px;'>"
-        "      %3"
-        "    </div>"
-        "    <div style='color: #000; word-wrap: break-word;'>"
-        "      %4"
-        "    </div>"
-        "    <div style='color: #888; font-size: 11px; margin-top: 5px;'>"
-        "      %5"
-        "    </div>"
-        "  </div>"
+
+    const QString bg_color = is_sent ? "#dcf8c6" : "#ffffff";
+    const QString content_alignment = is_sent ? "right" : "left";
+    const QString time_alignment = is_sent ? "right" : "left";
+
+    QString name = is_sent ? QStringLiteral("我") : m_peer_info.username;
+    name = name.toHtmlEscaped();
+
+    const QString bubble = QString(
+        "<div style='"
+        "  background-color:%1;"
+        "  border-radius:10px;"
+        "  padding:10px 15px;"
+        "  max-width:75%%;"
+        "  box-shadow:0 1px 2px rgba(0,0,0,0.1);"
+        "  display:inline-block;"
+        "'>"
+        "  <div style='font-weight:bold; color:#333; margin:0 0 5px 0; text-align:%2;'>%3</div>"
+        "  <div style='color:#000; word-wrap:break-word; white-space:pre-wrap; text-align:%2;'>%4</div>"
+        "  <div style='color:#888; font-size:11px; margin:5px 0 0 0; text-align:%5;'>%6</div>"
         "</div>")
-        .arg(alignment)
         .arg(bg_color)
+        .arg(content_alignment)
         .arg(name)
         .arg(content)
-        .arg(time_str);
-    
-    m_message_display->append(html);
-    
+        .arg(time_alignment)
+        .arg(time_str.toHtmlEscaped());
+
+    QTextCursor cursor = m_message_display->textCursor();
+    cursor.movePosition(QTextCursor::End);
+    if (!m_message_display->document()->isEmpty()) {
+        cursor.insertBlock();
+    }
+
+    QTextBlockFormat block_format = cursor.blockFormat();
+    block_format.setAlignment(is_sent ? Qt::AlignRight : Qt::AlignLeft);
+    block_format.setBottomMargin(8);
+    block_format.setTopMargin(8);
+    block_format.setLeftMargin(is_sent ? 80 : 12);
+    block_format.setRightMargin(is_sent ? 12 : 80);
+    cursor.setBlockFormat(block_format);
+
+    cursor.insertHtml(bubble);
+    m_message_display->setTextCursor(cursor);
+
     // 滚动到底部
     QScrollBar* scrollbar = m_message_display->verticalScrollBar();
     scrollbar->setValue(scrollbar->maximum());
@@ -376,8 +419,7 @@ void ChatWindow::onSendFile()
     
     if (!filename.isEmpty()) {
         if (m_network_manager) {
-            m_network_manager->sendFile(
-                QString::fromStdString(m_peer_info.user_id), filename);
+            m_network_manager->sendFile(m_peer_info.user_id, filename);
         }
     }
 }
@@ -402,8 +444,7 @@ void ChatWindow::onInputTextChanged()
 {
     if (!m_is_typing && m_network_manager) {
         m_is_typing = true;
-        m_network_manager->sendTypingIndicator(
-            QString::fromStdString(m_peer_info.user_id), true);
+        m_network_manager->sendTypingIndicator(m_peer_info.user_id, true);
     }
     
     // 重置定时器
@@ -414,8 +455,7 @@ void ChatWindow::onTypingTimeout()
 {
     if (m_is_typing && m_network_manager) {
         m_is_typing = false;
-        m_network_manager->sendTypingIndicator(
-            QString::fromStdString(m_peer_info.user_id), false);
+        m_network_manager->sendTypingIndicator(m_peer_info.user_id, false);
     }
 }
 
@@ -486,7 +526,7 @@ QString ChatWindow::formatMessageTime(const QDateTime& time) const
 
 QString ChatWindow::formatMessageContent(const ChatMessage& message) const
 {
-    QString content = QString::fromStdString(message.content);
+    QString content = message.content;
     
     switch (message.message_type) {
         case MessageContentType::PlainText:
@@ -514,6 +554,29 @@ QString ChatWindow::formatMessageContent(const ChatMessage& message) const
     }
     
     return content;
+}
+
+// ============================================================================
+// 事件处理
+// ============================================================================
+
+void ChatWindow::changeEvent(QEvent* event)
+{
+    QWidget::changeEvent(event);
+
+    // 当窗口激活时，通知主窗口（用于清除未读等）
+    if (event->type() == QEvent::ActivationChange) {
+        if (isActiveWindow()) {
+            emit chatActivated(m_peer_info.user_id);
+        }
+    }
+}
+
+void ChatWindow::closeEvent(QCloseEvent* event)
+{
+    // 通知主窗口聊天窗口已关闭
+    emit chatClosed(m_peer_info.user_id);
+    QWidget::closeEvent(event);
 }
 
 } // namespace KylinMessenger

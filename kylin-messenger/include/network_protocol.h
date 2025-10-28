@@ -15,194 +15,141 @@
 #define NETWORK_PROTOCOL_H
 
 #include <QString>
-#include <QHostAddress>
-#include <QDateTime>
 #include <QByteArray>
+#include <QDateTime>
+#include <QList>
+#include <QMap>
+
+#include <QtGlobal>
 #include <QDataStream>
 
 namespace KylinMessenger {
 
-/**
- * @brief Protocol version
- */
+constexpr quint32 PROTOCOL_MAGIC = 0x4B594C4E;  ///< 'KYLN'
 constexpr quint16 PROTOCOL_VERSION = 1;
+constexpr quint32 MAX_PACKET_SIZE = 1024 * 1024;  ///< 1 MiB
 
-/**
- * @brief Network ports
- */
-constexpr quint16 UDP_BROADCAST_PORT = 2425;  // Discovery port
-constexpr quint16 TCP_MESSAGE_PORT = 2426;    // Messaging port
+constexpr quint16 UDP_PORT = 2425;
+constexpr quint16 TCP_PORT = 2426;
 
-/**
- * @brief Message types for the protocol
- */
-enum class MessageType : quint8 {
-    // Discovery messages (UDP)
-    PRESENCE_ANNOUNCE = 0x01,    ///< Announce user presence
-    PRESENCE_QUERY = 0x02,       ///< Query for online users
-    PRESENCE_RESPONSE = 0x03,    ///< Response to presence query
-    USER_OFFLINE = 0x04,         ///< User going offline
-    
-    // Chat messages (TCP)
-    TEXT_MESSAGE = 0x10,         ///< Regular text message
-    GROUP_MESSAGE = 0x11,        ///< Group chat message
-    BROADCAST_MESSAGE = 0x12,    ///< Broadcast to all users
-    
-    // File transfer (TCP)
-    FILE_TRANSFER_REQUEST = 0x20, ///< Request to send file
-    FILE_TRANSFER_ACCEPT = 0x21,  ///< Accept file transfer
-    FILE_TRANSFER_REJECT = 0x22,  ///< Reject file transfer
-    FILE_TRANSFER_DATA = 0x23,    ///< File data chunk
-    FILE_TRANSFER_COMPLETE = 0x24, ///< File transfer complete
-    
-    // Special messages
-    IMAGE_MESSAGE = 0x30,         ///< Image/screenshot message
-    EMOJI_MESSAGE = 0x31,         ///< Emoji message
-    
-    // AI-related messages
-    AI_QUERY = 0x40,             ///< Query to AI assistant
-    AI_RESPONSE = 0x41,          ///< Response from AI assistant
-    
-    // System messages
-    TYPING_INDICATOR = 0x50,     ///< User is typing
-    READ_RECEIPT = 0x51,         ///< Message read receipt
-    PING = 0xFE,                 ///< Keep-alive ping
-    PONG = 0xFF                  ///< Keep-alive pong
+constexpr int HEADER_SIZE = sizeof(quint32) + sizeof(quint16) + sizeof(quint16) +
+                            sizeof(quint32) + sizeof(quint32);
+
+enum class UserStatus : quint8 {
+    Offline = 0,
+    Online = 1,
+    Away = 2,
+    Busy = 3,
+    Invisible = 4
 };
 
-/**
- * @brief User information structure
- */
+enum class MessageContentType : quint8 {
+    PlainText = 0,
+    Image = 1,
+    File = 2,
+    Emoji = 3,
+    System = 4
+};
+
+enum class MessageType : quint16 {
+    UserPresence = 0x0001,
+    ChatMessage = 0x0010,
+    GroupMessage = 0x0011,
+    BroadcastMessage = 0x0012,
+    FileOffer = 0x0020,
+    FileTransferData = 0x0021,
+    TypingIndicator = 0x0050,
+    ReadReceipt = 0x0051,
+    Ping = 0x00FE,
+    Pong = 0x00FF
+};
+
+struct FileAttachment {
+    QString filename;
+    QString filepath;
+    quint64 filesize = 0;
+    QString file_hash;
+};
+
 struct UserInfo {
-    QString username;            ///< Display name
-    QString hostname;            ///< Computer hostname
-    QHostAddress ipAddress;      ///< IP address
-    QString group;               ///< User group
-    QString status;              ///< Status message
-    QDateTime lastSeen;          ///< Last activity time
-    bool isOnline;               ///< Online status
-    
-    UserInfo() : isOnline(false) {}
-    
-    // Serialization
+    QString user_id;
+    QString username;
+    QString hostname;
+    QString ip_address;
+    quint16 port = 0;
+    UserStatus status = UserStatus::Offline;
+    QString status_text;
+    QString avatar_hash;
+    QString group_name;
+
+    UserInfo();
+
     QByteArray serialize() const;
-    static UserInfo deserialize(const QByteArray& data);
+    bool deserialize(const QByteArray& data);
 };
 
-/**
- * @brief Chat message structure
- */
 struct ChatMessage {
-    QString messageId;           ///< Unique message ID
-    QString senderId;            ///< Sender's user ID
-    QString senderName;          ///< Sender's display name
-    QString receiverId;          ///< Receiver's user ID (empty for broadcast)
-    QString groupId;             ///< Group ID (if group message)
-    MessageType type;            ///< Message type
-    QString content;             ///< Message content
-    QByteArray binaryData;       ///< Binary data (images, files)
-    QDateTime timestamp;         ///< Send time
-    QVariantMap metadata;        ///< Additional metadata
-    
-    ChatMessage() : type(MessageType::TEXT_MESSAGE) {
-        timestamp = QDateTime::currentDateTime();
-    }
-    
-    // Serialization
+    QString message_id;
+    QString sender_id;
+    QString receiver_id;
+    QString group_id;
+    MessageContentType message_type = MessageContentType::PlainText;
+    QString content;
+    QDateTime timestamp;
+    bool is_read = false;
+    QList<FileAttachment> attachments;
+    QMap<QString, QString> metadata;
+
+    ChatMessage();
+
     QByteArray serialize() const;
-    static ChatMessage deserialize(const QByteArray& data);
+    bool deserialize(const QByteArray& data);
 };
 
-/**
- * @brief Protocol packet header
- */
 struct PacketHeader {
-    quint32 magic;               ///< Magic number: 0x4B594C4E ('KYLN')
-    quint16 version;             ///< Protocol version
-    MessageType type;            ///< Message type
-    quint32 payloadSize;         ///< Payload size in bytes
-    quint32 checksum;            ///< CRC32 checksum
-    
-    PacketHeader() 
-        : magic(0x4B594C4E)
-        , version(PROTOCOL_VERSION)
-        , type(MessageType::TEXT_MESSAGE)
-        , payloadSize(0)
-        , checksum(0) {}
-    
-    // Serialization
+    quint32 magic_number;
+    quint16 version;
+    MessageType message_type;
+    quint32 payload_size;
+    quint32 checksum;
+
+    PacketHeader();
+
     QByteArray serialize() const;
-    static PacketHeader deserialize(const QByteArray& data);
+    bool deserialize(const QByteArray& data);
     bool isValid() const;
 };
 
-/**
- * @brief Complete network packet
- */
 class NetworkPacket {
 public:
     NetworkPacket();
-    NetworkPacket(MessageType type);
-    
-    // Header access
-    PacketHeader& header() { return header_; }
-    const PacketHeader& header() const { return header_; }
-    
-    // Payload access
+    explicit NetworkPacket(MessageType type);
+
+    const PacketHeader& getHeader() const { return header; }
+    const QByteArray& getPayload() const { return payload; }
+
     void setPayload(const QByteArray& data);
-    QByteArray payload() const { return payload_; }
-    
-    // Convenience methods
-    void setUserInfo(const UserInfo& user);
-    UserInfo getUserInfo() const;
-    
-    void setChatMessage(const ChatMessage& message);
-    ChatMessage getChatMessage() const;
-    
-    // Serialization
+
     QByteArray serialize() const;
     bool deserialize(const QByteArray& data);
-    
-    // Validation
     bool isValid() const;
-    void updateChecksum();
-    
-private:
-    PacketHeader header_;
-    QByteArray payload_;
-    
-    static quint32 calculateChecksum(const QByteArray& data);
-};
 
-/**
- * @brief Helper functions for protocol
- */
-class ProtocolHelper {
-public:
-    /**
-     * @brief Generate unique message ID
-     */
-    static QString generateMessageId();
-    
-    /**
-     * @brief Get user ID from IP address
-     */
-    static QString getUserId(const QHostAddress& addr);
-    
-    /**
-     * @brief Check if message type requires TCP
-     */
-    static bool requiresTCP(MessageType type);
-    
-    /**
-     * @brief Check if message type uses UDP
-     */
-    static bool usesUDP(MessageType type);
-    
-    /**
-     * @brief Get message type name for debugging
-     */
-    static QString getMessageTypeName(MessageType type);
+    static NetworkPacket createPresencePacket(const UserInfo& user_info);
+    static NetworkPacket createChatMessagePacket(const ChatMessage& message);
+    static NetworkPacket createGroupMessagePacket(const QString& group_id,
+                                                  const ChatMessage& message);
+    static NetworkPacket createFileOfferPacket(const QString& filename,
+                                               quint64 filesize,
+                                               const QString& file_hash);
+    static NetworkPacket createTypingIndicatorPacket(const QString& user_id,
+                                                     bool is_typing);
+    static NetworkPacket createReadReceiptPacket(const QString& message_id);
+
+    static quint32 calculateChecksum(const QByteArray& data);
+
+private:
+    PacketHeader header{};
+    QByteArray payload;
 };
 
 } // namespace KylinMessenger

@@ -1,11 +1,64 @@
 cmake_minimum_required(VERSION 3.16)
 
-# 查找GoogleTest（可选）
-find_package(GTest)
+find_package(Threads REQUIRED)
 
-if(NOT GTest_FOUND)
-    message(WARNING "GoogleTest not found, skipping tests")
-    return()
+set(KYLIN_GTEST_ROOT "/usr/src/googletest" CACHE PATH "Path to system GoogleTest source tree")
+set(_gtest_lib_dir "${KYLIN_GTEST_ROOT}/build/lib")
+set(_gtest_include_dir "${KYLIN_GTEST_ROOT}/googletest/include")
+
+set(GTEST_LIB_TARGET "")
+set(GTEST_MAIN_TARGET "")
+
+find_package(GTest QUIET)
+
+if(GTest_FOUND AND TARGET GTest::GTest AND TARGET GTest::Main)
+    get_target_property(_gtest_target_type GTest::GTest TYPE)
+    if(_gtest_target_type AND NOT _gtest_target_type STREQUAL "INTERFACE_LIBRARY")
+        get_target_property(_gtest_imported_location GTest::GTest IMPORTED_LOCATION)
+        get_filename_component(_gtest_ext "${_gtest_imported_location}" EXT)
+        string(TOLOWER "${_gtest_ext}" _gtest_ext_lower)
+        if(_gtest_ext_lower STREQUAL ".a" OR _gtest_ext_lower STREQUAL ".so" OR _gtest_ext_lower STREQUAL "")
+            set(GTEST_LIB_TARGET GTest::GTest)
+            set(GTEST_MAIN_TARGET GTest::Main)
+        else()
+            message(STATUS "Ignoring incompatible GoogleTest import at ${_gtest_imported_location}")
+        endif()
+    else()
+        message(STATUS "Ignoring GoogleTest target of type ${_gtest_target_type}")
+    endif()
+endif()
+
+if(NOT GTEST_LIB_TARGET OR NOT GTEST_MAIN_TARGET)
+    if(EXISTS "${_gtest_lib_dir}/libgtest.a" AND EXISTS "${_gtest_lib_dir}/libgtest_main.a")
+        add_library(KylinGTest::GTest STATIC IMPORTED)
+        set_target_properties(KylinGTest::GTest PROPERTIES
+            IMPORTED_LOCATION "${_gtest_lib_dir}/libgtest.a"
+            INTERFACE_INCLUDE_DIRECTORIES "${_gtest_include_dir}"
+        )
+
+        add_library(KylinGTest::Main STATIC IMPORTED)
+        set_target_properties(KylinGTest::Main PROPERTIES
+            IMPORTED_LOCATION "${_gtest_lib_dir}/libgtest_main.a"
+            INTERFACE_INCLUDE_DIRECTORIES "${_gtest_include_dir}"
+        )
+
+        set(GTEST_LIB_TARGET KylinGTest::GTest)
+        set(GTEST_MAIN_TARGET KylinGTest::Main)
+        set(KYLIN_USING_FALLBACK_GTEST TRUE)
+        message(STATUS "Using fallback GoogleTest from ${_gtest_lib_dir}")
+    else()
+        message(WARNING "GoogleTest static libraries not found, skipping tests")
+        return()
+    endif()
+endif()
+
+# 选择 Qt 包前缀（与顶层保持一致）
+if(TARGET Qt6::Core)
+    set(QT_PACKAGE_PREFIX Qt6)
+elseif(TARGET Qt5::Core)
+    set(QT_PACKAGE_PREFIX Qt5)
+else()
+    message(FATAL_ERROR "Neither Qt6 nor Qt5 targets are available.")
 endif()
 
 # 测试可执行文件
@@ -14,11 +67,13 @@ add_executable(test_network_protocol
 )
 
 target_link_libraries(test_network_protocol PRIVATE
-    Qt6::Core
-    Qt6::Network
+    ${PROJECT_NAME}-core
+    ${QT_PACKAGE_PREFIX}::Core
+    ${QT_PACKAGE_PREFIX}::Network
     ZLIB::ZLIB
-    GTest::GTest
-    GTest::Main
+    ${GTEST_LIB_TARGET}
+    ${GTEST_MAIN_TARGET}
+    Threads::Threads
 )
 
 add_executable(test_ai_service
@@ -26,10 +81,17 @@ add_executable(test_ai_service
 )
 
 target_link_libraries(test_ai_service PRIVATE
-    Qt6::Core
-    GTest::GTest
-    GTest::Main
+    ${PROJECT_NAME}-core
+    ${QT_PACKAGE_PREFIX}::Core
+    ${GTEST_LIB_TARGET}
+    ${GTEST_MAIN_TARGET}
+    Threads::Threads
 )
+
+if(KYLIN_USING_FALLBACK_GTEST)
+    target_include_directories(test_network_protocol PRIVATE BEFORE ${_gtest_include_dir})
+    target_include_directories(test_ai_service PRIVATE BEFORE ${_gtest_include_dir})
+endif()
 
 # 注册测试
 add_test(NAME NetworkProtocolTest COMMAND test_network_protocol)

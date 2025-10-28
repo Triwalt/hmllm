@@ -11,6 +11,7 @@
 #include <QLabel>
 #include <QToolBar>
 #include <QStatusBar>
+#include <QMenuBar>
 #include <memory>
 
 #include "network_manager.h"
@@ -94,8 +95,11 @@ private:
     void updateUserList();
     void updateUserListItem(const UserInfo& user_info);
     void removeUserListItem(const QString& user_id);
+    void ensureLoopbackEntry();
+    void incrementUnread(const QString& user_id);
+    void markConversationRead(const QString& user_id);
     
-    ChatWindow* openChatWindow(const UserInfo& user_info);
+    ChatWindow* openChatWindow(const UserInfo& user_info, bool activate = true);
     ChatWindow* findChatWindow(const QString& user_id);
     
     void showNotification(const QString& title, const QString& message);
@@ -104,6 +108,7 @@ private:
     // 网络
     NetworkManager* m_network_manager;
     UserInfo m_local_user;
+    UserInfo m_loopback_user;
     
     // AI服务
     std::shared_ptr<IAIService> m_ai_service;
@@ -129,6 +134,8 @@ private:
     
     // 聊天窗口管理
     QMap<QString, ChatWindow*> m_chat_windows;
+    QHash<QString, int> m_unread_counts;
+    QHash<QString, UserInfo> m_cached_users;
     
     // 右键菜单
     QMenu* m_user_context_menu;

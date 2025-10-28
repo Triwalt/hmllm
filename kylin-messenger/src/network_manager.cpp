@@ -4,7 +4,9 @@
 #include <QHostInfo>
 #include <QNetworkInterface>
 #include <QFile>
+#include <QFileInfo>
 #include <QDebug>
+#include "qt_compat.h"
 
 namespace KylinMessenger {
 
@@ -404,7 +406,7 @@ void NetworkManager::handleChatMessage(const NetworkPacket& packet)
 void NetworkManager::handleGroupMessage(const NetworkPacket& packet)
 {
     QDataStream stream(packet.getPayload());
-    stream.setVersion(QDataStream::Qt_6_0);
+    stream.setVersion(KYLIN_QDATASTREAM_VERSION);
     
     QString group_id;
     QByteArray message_data;
@@ -422,7 +424,7 @@ void NetworkManager::handleFileOffer(const NetworkPacket& packet,
                                      QTcpSocket* socket)
 {
     QDataStream stream(packet.getPayload());
-    stream.setVersion(QDataStream::Qt_6_0);
+    stream.setVersion(KYLIN_QDATASTREAM_VERSION);
     
     QString filename;
     quint64 filesize;
@@ -443,7 +445,7 @@ void NetworkManager::handleFileOffer(const NetworkPacket& packet,
 void NetworkManager::handleTypingIndicator(const NetworkPacket& packet)
 {
     QDataStream stream(packet.getPayload());
-    stream.setVersion(QDataStream::Qt_6_0);
+    stream.setVersion(KYLIN_QDATASTREAM_VERSION);
     
     QString user_id;
     bool is_typing;
@@ -457,7 +459,7 @@ void NetworkManager::handleTypingIndicator(const NetworkPacket& packet)
 void NetworkManager::handleReadReceipt(const NetworkPacket& packet)
 {
     QDataStream stream(packet.getPayload());
-    stream.setVersion(QDataStream::Qt_6_0);
+    stream.setVersion(KYLIN_QDATASTREAM_VERSION);
     
     QString message_id;
     stream >> message_id;
@@ -540,6 +542,12 @@ void NetworkManager::updateLocalUserStatus(UserStatus status,
     m_local_user.status = status;
     m_local_user.status_text = status_text;
     broadcastPresence();
+}
+
+void NetworkManager::updateLocalUserStatus(UserStatus status,
+                                           const std::string& status_text)
+{
+    updateLocalUserStatus(status, QString::fromStdString(status_text));
 }
 
 } // namespace KylinMessenger

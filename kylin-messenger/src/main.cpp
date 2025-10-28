@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <QFile>
 #include <QDateTime>
+#include <QUuid>
 #include <iostream>
 
 #include "main_window.h"
@@ -81,14 +82,14 @@ int main(int argc, char* argv[])
     
     // 初始化本地用户信息
     UserInfo local_user;
-    local_user.user_id = QUuid::createUuid().toString().toStdString();
+    local_user.user_id = QUuid::createUuid().toString();
     local_user.username = qgetenv("USER").isEmpty() ? 
-        "User" : QString::fromLocal8Bit(qgetenv("USER")).toStdString();
+        QStringLiteral("User") : QString::fromLocal8Bit(qgetenv("USER"));
     local_user.status = UserStatus::Online;
     local_user.status_text = "在线";
     
-    qInfo() << "本地用户ID:" << QString::fromStdString(local_user.user_id);
-    qInfo() << "用户名:" << QString::fromStdString(local_user.username);
+    qInfo() << "本地用户ID:" << local_user.user_id;
+    qInfo() << "用户名:" << local_user.username;
     
     // 初始化网络
     if (!network_manager->initialize(local_user)) {

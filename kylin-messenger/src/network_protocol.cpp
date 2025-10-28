@@ -1,6 +1,7 @@
 // network_protocol.cpp - P2P网络协议实现
 #include "network_protocol.h"
 #include <QDataStream>
+#include "qt_compat.h"
 #include <QBuffer>
 #include <QDebug>
 #include <zlib.h>
@@ -21,7 +22,7 @@ QByteArray UserInfo::serialize() const
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
-    stream.setVersion(QDataStream::Qt_6_0);
+    stream.setVersion(KYLIN_QDATASTREAM_VERSION);
     
     stream << user_id;
     stream << username;
@@ -39,7 +40,7 @@ QByteArray UserInfo::serialize() const
 bool UserInfo::deserialize(const QByteArray& data)
 {
     QDataStream stream(data);
-    stream.setVersion(QDataStream::Qt_6_0);
+    stream.setVersion(KYLIN_QDATASTREAM_VERSION);
     
     quint8 status_byte;
     stream >> user_id;
@@ -72,7 +73,7 @@ QByteArray ChatMessage::serialize() const
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
-    stream.setVersion(QDataStream::Qt_6_0);
+    stream.setVersion(KYLIN_QDATASTREAM_VERSION);
     
     stream << message_id;
     stream << sender_id;
@@ -104,7 +105,7 @@ QByteArray ChatMessage::serialize() const
 bool ChatMessage::deserialize(const QByteArray& data)
 {
     QDataStream stream(data);
-    stream.setVersion(QDataStream::Qt_6_0);
+    stream.setVersion(KYLIN_QDATASTREAM_VERSION);
     
     quint8 type_byte;
     stream >> message_id;
@@ -161,7 +162,7 @@ QByteArray PacketHeader::serialize() const
 {
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
-    stream.setVersion(QDataStream::Qt_6_0);
+    stream.setVersion(KYLIN_QDATASTREAM_VERSION);
     
     stream << magic_number;
     stream << version;
@@ -175,7 +176,7 @@ QByteArray PacketHeader::serialize() const
 bool PacketHeader::deserialize(const QByteArray& data)
 {
     QDataStream stream(data);
-    stream.setVersion(QDataStream::Qt_6_0);
+    stream.setVersion(KYLIN_QDATASTREAM_VERSION);
     
     quint16 type_value;
     stream >> magic_number;
@@ -303,7 +304,7 @@ NetworkPacket NetworkPacket::createFileOfferPacket(
     
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
-    stream.setVersion(QDataStream::Qt_6_0);
+    stream.setVersion(KYLIN_QDATASTREAM_VERSION);
     
     stream << filename;
     stream << filesize;
@@ -321,7 +322,7 @@ NetworkPacket NetworkPacket::createTypingIndicatorPacket(
     
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
-    stream.setVersion(QDataStream::Qt_6_0);
+    stream.setVersion(KYLIN_QDATASTREAM_VERSION);
     
     stream << user_id;
     stream << is_typing;
@@ -336,7 +337,7 @@ NetworkPacket NetworkPacket::createReadReceiptPacket(const QString& message_id)
     
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
-    stream.setVersion(QDataStream::Qt_6_0);
+    stream.setVersion(KYLIN_QDATASTREAM_VERSION);
     
     stream << message_id;
     
@@ -352,7 +353,7 @@ NetworkPacket NetworkPacket::createGroupMessagePacket(
     
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
-    stream.setVersion(QDataStream::Qt_6_0);
+    stream.setVersion(KYLIN_QDATASTREAM_VERSION);
     
     stream << group_id;
     QByteArray message_data = message.serialize();

@@ -18,44 +18,66 @@
 #include <vector>
 #include <memory>
 #include <functional>
+#include <cstdint>
 #include <QImage>
 #include <QVariant>
 
 namespace KylinMessenger {
 
-/**
- * @brief AI service capability flags
- */
-enum class AICapability {
-    TEXT_PROCESSING = 0x01,      ///< Can process text input
-    IMAGE_PROCESSING = 0x02,     ///< Can process image input
-    CONVERSATION = 0x04,         ///< Can maintain conversation context
-    REAL_TIME = 0x08,            ///< Can provide real-time streaming output
-    OBJECT_DETECTION = 0x10,     ///< Can detect objects in images
-    TEXT_GENERATION = 0x20,      ///< Can generate text
-    CLASSIFICATION = 0x40        ///< Can classify content
+enum class AICapability : std::uint32_t {
+    None            = 0x00,
+    TextProcessing  = 0x01,
+    ImageProcessing = 0x02,
+    Conversation    = 0x04,
+    RealTime        = 0x08,
+    ObjectDetection = 0x10,
+    TextGeneration  = 0x20,
+    ContentAnalysis = 0x40,
+    SmartReply      = 0x80
+};
+
+inline AICapability operator|(AICapability lhs, AICapability rhs)
+{
+    return static_cast<AICapability>(static_cast<std::uint32_t>(lhs) |
+                                     static_cast<std::uint32_t>(rhs));
+}
+
+inline AICapability& operator|=(AICapability& lhs, AICapability rhs)
+{
+    lhs = lhs | rhs;
+    return lhs;
+}
+
+inline bool operator&(AICapability lhs, AICapability rhs)
+{
+    return (static_cast<std::uint32_t>(lhs) &
+            static_cast<std::uint32_t>(rhs)) != 0;
+}
+
+enum class ContentAnalysisType {
+    Sentiment,
+    SafetyFilter,
+    LanguageDetection
 };
 
 /**
  * @brief AI processing result structure
  */
 struct AIResult {
-    bool success;                           ///< Whether the operation succeeded
-    std::string error_message;              ///< Error message if failed
-    std::string text_output;                ///< Text output from AI
-    std::vector<std::string> suggestions;   ///< Multiple suggestions (for smart reply)
-    QVariantMap metadata;                   ///< Additional metadata (tags, confidence, etc.)
+    bool success;
+    float confidence;
+    std::string error_message;
+    std::string text_output;
+    std::vector<std::string> suggestions;
+    QVariantMap metadata;
     
-    AIResult() : success(false) {}
+    AIResult() : success(false), confidence(0.0f) {}
 };
 
-/**
- * @brief Callback type for streaming AI output
- * 
- * @param partial_output The incremental output from AI
- * @param is_final Whether this is the final output
- */
-using AIStreamCallback = std::function<void(const std::string& partial_output, bool is_final)>;
+using AICallback = std::function<void(const AIResult& result)>;
+
+using AIStreamCallback = std::function<bool(const std::string& partial_output,
+                                            bool is_final)>;
 
 /**
  * @brief Abstract base class for AI services
@@ -75,8 +97,8 @@ public:
      * @param config_path Optional path to configuration file
      * @return true if initialization succeeded
      */
-    virtual bool initialize(const std::string& model_path, 
-                           const std::string& config_path = "") = 0;
+    virtual bool initialize(const std::string& model_path,
+                            const std::string& config_path = "") = 0;
     
     /**
      * @brief Shutdown and cleanup the AI service
@@ -101,7 +123,7 @@ public:
     /**
      * @brief Get supported capabilities
      */
-    virtual int getCapabilities() const = 0;
+    virtual AICapability getCapabilities() const = 0;
     
     /**
      * @brief Process text input
@@ -110,7 +132,7 @@ public:
      * @param context Optional conversation context
      * @return AIResult containing the processing result
      */
-    virtual AIResult processText(const std::string& input, 
+    virtual AIResult processText(const std::string& input,
                                  const std::string& context = "") = 0;
     
     /**
@@ -121,9 +143,9 @@ public:
      * @param context Optional conversation context
      * @return AIResult with final status
      */
-    virtual AIResult processTextStreaming(const std::string& input,
-                                         AIStreamCallback callback,
-                                         const std::string& context = "") = 0;
+    virtual AIResult processTextStream(const std::string& input,
+                                       AIStreamCallback callback,
+                                       const std::string& context = "") = 0;
     
     /**
      * @brief Process image input
@@ -132,8 +154,16 @@ public:
      * @param task Task description (e.g., "detect", "tag", "caption")
      * @return AIResult containing the processing result
      */
-    virtual AIResult processImage(const QImage& image, 
+    virtual AIResult processImage(const QImage& image,
                                   const std::string& task = "detect") = 0;
+
+    virtual void processTextAsync(const std::string& input,
+                                  AICallback callback,
+                                  const std::string& context = "") = 0;
+
+    virtual void processImageAsync(const QImage& image,
+                                   AICallback callback,
+                                   const std::string& task = "detect") = 0;
     
     /**
      * @brief Generate smart reply suggestions
@@ -151,31 +181,14 @@ public:
      * @param content Content to analyze
      * @return AIResult with metadata containing filter decision
      */
-    virtual AIResult analyzeContent(const std::string& content) = 0;
+    virtual AIResult analyzeContent(const std::string& content,
+                                    ContentAnalysisType type = ContentAnalysisType::Sentiment) = 0;
     
     /**
      * @brief Reset conversation context
      */
     virtual void resetContext() = 0;
-};
-
-/**
- * @brief Factory class for creating AI service instances
- */
-class AIServiceFactory {
-public:
-    /**
-     * @brief Create an AI service instance by name
-     * 
-     * @param service_name Name of the service ("echo", "llm_chat", "image_tagger", etc.)
-     * @return Pointer to the created service, or nullptr if not found
-     */
-    static std::unique_ptr<IAIService> createService(const std::string& service_name);
-    
-    /**
-     * @brief Get list of available AI services
-     */
-    static std::vector<std::string> getAvailableServices();
+    virtual bool cancelOperation() = 0;
 };
 
 } // namespace KylinMessenger

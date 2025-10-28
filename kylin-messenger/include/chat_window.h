@@ -12,6 +12,7 @@
 #include <QLabel>
 #include <QTimer>
 #include <memory>
+#include <QString>
 
 #include "network_protocol.h"
 #include "network_manager.h"
@@ -51,6 +52,9 @@ public:
      * @brief 添加接收到的消息
      */
     void addReceivedMessage(const ChatMessage& message);
+
+    const UserInfo& peerInfo() const { return m_peer_info; }
+    QString peerId() const { return m_peer_info.user_id; }
     
 public slots:
     void onSendMessage();
@@ -60,6 +64,14 @@ public slots:
     void onInputTextChanged();
     void onTypingTimeout();
     
+signals:
+    void chatActivated(const QString& user_id);
+    void chatClosed(const QString& user_id);
+
+protected:
+    void changeEvent(QEvent* event) override;
+    void closeEvent(QCloseEvent* event) override;
+
 private:
     void setupUI();
     void setupConnections();
@@ -70,6 +82,7 @@ private:
     
     void sendTextMessage(const QString& text);
     void sendImageMessage(const QImage& image);
+    void sendLoopbackMessage(const QString& text);
     
     QString formatMessageTime(const QDateTime& time) const;
     QString formatMessageContent(const ChatMessage& message) const;
@@ -100,6 +113,7 @@ private:
     
     // 是否为AI助手窗口
     bool m_is_ai_chat;
+    bool m_is_loopback;
 };
 
 } // namespace KylinMessenger

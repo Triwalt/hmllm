@@ -30,6 +30,7 @@ MainWindow::MainWindow(QWidget* parent)
     setupConnections();
     
     loadSettings();
+    ensureLoopbackEntry();
     
     setWindowTitle("麒麟信使 - Kylin Messenger");
     resize(300, 600);
@@ -65,6 +66,7 @@ void MainWindow::setNetworkManager(NetworkManager* network_manager)
                 this, &MainWindow::onMessageReceived);
         
         m_local_user = m_network_manager->getLocalUser();
+    ensureLoopbackEntry();
     }
 }
 
@@ -92,6 +94,8 @@ void MainWindow::setupUI()
     m_user_list = new QListWidget(this);
     m_user_list->setContextMenuPolicy(Qt::CustomContextMenu);
     main_layout->addWidget(m_user_list);
+    m_user_list->setAlternatingRowColors(true);
+    m_user_list->setSelectionMode(QAbstractItemView::SingleSelection);
     
     // 状态栏
     QHBoxLayout* status_layout = new QHBoxLayout();
@@ -212,8 +216,7 @@ void MainWindow::onUserOnline(const UserInfo& user_info)
 {
     updateUserListItem(user_info);
     
-    QString message = QString("%1 上线了").arg(
-        QString::fromStdString(user_info.username));
+    QString message = QStringLiteral("%1 上线了").arg(user_info.username);
     
     statusBar()->showMessage(message, 3000);
     showNotification("用户上线", message);
@@ -234,7 +237,7 @@ void MainWindow::onUserInfoUpdated(const UserInfo& user_info)
 
 void MainWindow::onMessageReceived(const ChatMessage& message)
 {
-    QString sender_id = QString::fromStdString(message.sender_id);
+    QString sender_id = message.sender_id;
     
     // 查找或创建聊天窗口
     ChatWindow* chat_window = findChatWindow(sender_id);
@@ -256,18 +259,19 @@ void MainWindow::onMessageReceived(const ChatMessage& message)
         }
         
         if (found) {
-            chat_window = openChatWindow(sender_info);
+            chat_window = openChatWindow(sender_info, false);
         }
     }
     
     if (chat_window) {
+        bool wasActive = chat_window->isActiveWindow();
         chat_window->addReceivedMessage(message);
-        
-        // 如果窗口未激活，显示通知
-        if (!chat_window->isActiveWindow()) {
-            QString notification = QString("%1: %2")
-                .arg(QString::fromStdString(message.sender_id))
-                .arg(QString::fromStdString(message.content).left(50));
+
+        if (!wasActive) {
+            incrementUnread(sender_id);
+            QString notification = QStringLiteral("%1: %2")
+                .arg(message.sender_id)
+                .arg(message.content.left(50));
             
             showNotification("新消息", notification);
             
@@ -275,6 +279,12 @@ void MainWindow::onMessageReceived(const ChatMessage& message)
             m_tray_icon->showMessage("新消息", notification,
                                      QSystemTrayIcon::Information, 3000);
         }
+        else {
+            markConversationRead(sender_id);
+        }
+    }
+    else {
+        incrementUnread(sender_id);
     }
 }
 
@@ -286,11 +296,16 @@ void MainWindow::onUserItemDoubleClicked(QListWidgetItem* item)
 {
     QString user_id = item->data(Qt::UserRole).toString();
     
+    if (user_id == QStringLiteral("loopback")) {
+        openChatWindow(m_loopback_user, true);
+        return;
+    }
+
     if (m_network_manager) {
         auto users = m_network_manager->getOnlineUsers();
         for (const auto& user : users) {
-            if (QString::fromStdString(user.user_id) == user_id) {
-                openChatWindow(user);
+            if (user.user_id == user_id) {
+                openChatWindow(user, true);
                 break;
             }
         }
@@ -346,6 +361,8 @@ void MainWindow::onSendMessage()
 {
     if (m_current_context_item) {
         onUserItemDoubleClicked(m_current_context_item);
+    } else {
+        openChatWindow(m_loopback_user, true);
     }
 }
 
@@ -369,7 +386,7 @@ void MainWindow::onOpenAIChat()
     ai_user.username = "AI助手";
     ai_user.status = UserStatus::Online;
     
-    ChatWindow* chat_window = openChatWindow(ai_user);
+    ChatWindow* chat_window = openChatWindow(ai_user, true);
     if (chat_window && m_ai_service) {
         chat_window->setAIService(m_ai_service);
     }
@@ -467,13 +484,17 @@ void MainWindow::updateUserList()
 {
     if (m_network_manager) {
         int count = m_network_manager->getOnlineUsers().size();
-        m_user_count_label->setText(QString("在线用户: %1").arg(count));
+        int total = count + 1; // 包含本机回环测试
+        m_user_count_label->setText(QString("在线用户: %1 (含本机测试)").arg(total));
+    } else {
+        m_user_count_label->setText(QStringLiteral("在线用户: 1 (含本机测试)"));
     }
 }
 
 void MainWindow::updateUserListItem(const UserInfo& user_info)
 {
-    QString user_id = QString::fromStdString(user_info.user_id);
+    QString user_id = user_info.user_id;
+    m_cached_users.insert(user_id, user_info);
     
     // 查找是否已存在
     QListWidgetItem* item = nullptr;
@@ -492,14 +513,18 @@ void MainWindow::updateUserListItem(const UserInfo& user_info)
     }
     
     // 设置显示文本和图标
-    QString display_text = QString::fromStdString(user_info.username);
-    if (!user_info.status_text.empty()) {
-        display_text += QString(" - %1").arg(
-            QString::fromStdString(user_info.status_text));
+    QString display_text = user_info.username;
+    if (!user_info.status_text.isEmpty()) {
+        display_text += QStringLiteral(" - %1").arg(user_info.status_text);
     }
     
+    int unread = m_unread_counts.value(user_id, 0);
+    if (unread > 0) {
+        display_text += QStringLiteral(" (%1)").arg(unread);
+    }
+
     item->setText(display_text);
-    
+
     // 状态图标
     QString icon;
     switch (user_info.status) {
@@ -518,6 +543,12 @@ void MainWindow::updateUserListItem(const UserInfo& user_info)
     }
     
     item->setText(icon + " " + display_text);
+
+    QFont font = item->font();
+    font.setBold(unread > 0);
+    item->setFont(font);
+    item->setForeground(unread > 0 ? QBrush(QColor("#d9534f"))
+                                   : QBrush(Qt::black));
 }
 
 void MainWindow::removeUserListItem(const QString& user_id)
@@ -529,16 +560,39 @@ void MainWindow::removeUserListItem(const QString& user_id)
             break;
         }
     }
+
+    m_unread_counts.remove(user_id);
+    m_cached_users.remove(user_id);
 }
 
-ChatWindow* MainWindow::openChatWindow(const UserInfo& user_info)
+void MainWindow::ensureLoopbackEntry()
 {
-    QString user_id = QString::fromStdString(user_info.user_id);
+    m_loopback_user.user_id = QStringLiteral("loopback");
+
+    if (!m_local_user.username.isEmpty()) {
+        m_loopback_user.username = QStringLiteral("本机测试 (%1)")
+            .arg(m_local_user.username);
+    } else {
+        m_loopback_user.username = QStringLiteral("本机测试");
+    }
+
+    m_loopback_user.status = UserStatus::Online;
+    m_loopback_user.status_text = QStringLiteral("回环测试");
+
+    updateUserListItem(m_loopback_user);
+}
+
+ChatWindow* MainWindow::openChatWindow(const UserInfo& user_info, bool activate)
+{
+    QString user_id = user_info.user_id;
     
     ChatWindow* window = findChatWindow(user_id);
     if (window) {
         window->show();
-        window->activateWindow();
+        if (activate) {
+            window->raise();
+            window->activateWindow();
+        }
         return window;
     }
     
@@ -549,8 +603,19 @@ ChatWindow* MainWindow::openChatWindow(const UserInfo& user_info)
     connect(window, &QWidget::destroyed, this, [this, user_id]() {
         m_chat_windows.remove(user_id);
     });
+
+    connect(window, &ChatWindow::chatActivated, this,
+            [this](const QString& id) { markConversationRead(id); });
+
+    connect(window, &ChatWindow::chatClosed, this,
+            [this](const QString& id) { markConversationRead(id); });
     
     window->show();
+    if (activate) {
+        window->raise();
+        window->activateWindow();
+    }
+    markConversationRead(user_id);
     return window;
 }
 
@@ -565,6 +630,42 @@ void MainWindow::showNotification(const QString& title, const QString& message)
         m_tray_icon->showMessage(title, message,
                                  QSystemTrayIcon::Information,
                                  3000);
+    }
+}
+
+void MainWindow::incrementUnread(const QString& user_id)
+{
+    if (user_id.isEmpty()) {
+        return;
+    }
+
+    m_unread_counts[user_id] = m_unread_counts.value(user_id, 0) + 1;
+
+    auto it = m_cached_users.find(user_id);
+    if (it != m_cached_users.end()) {
+        updateUserListItem(it.value());
+    }
+}
+
+void MainWindow::markConversationRead(const QString& user_id)
+{
+    if (user_id.isEmpty()) {
+        return;
+    }
+
+    if (!m_unread_counts.contains(user_id)) {
+        return;
+    }
+
+    if (m_unread_counts.value(user_id) == 0) {
+        return;
+    }
+
+    m_unread_counts[user_id] = 0;
+
+    auto it = m_cached_users.find(user_id);
+    if (it != m_cached_users.end()) {
+        updateUserListItem(it.value());
     }
 }
 

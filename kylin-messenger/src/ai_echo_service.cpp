@@ -4,6 +4,7 @@
 #include <QDebug>
 #include <algorithm>
 #include <random>
+#include <thread>
 
 namespace KylinMessenger {
 
@@ -18,10 +19,12 @@ EchoAIService::~EchoAIService()
     shutdown();
 }
 
-bool EchoAIService::initialize(const std::string& model_path)
+bool EchoAIService::initialize(const std::string& model_path,
+                               const std::string& config_path)
 {
     qInfo() << "初始化Echo AI服务（测试模式）";
     qInfo() << "模型路径:" << QString::fromStdString(model_path);
+    Q_UNUSED(config_path);
     
     m_initialized = true;
     return true;
@@ -35,19 +38,31 @@ void EchoAIService::shutdown()
     }
 }
 
-bool EchoAIService::isInitialized() const
+bool EchoAIService::isReady() const
 {
     return m_initialized;
 }
 
-AICapability EchoAIService::getCapabilities() const
+std::string EchoAIService::getName() const
 {
-    return AICapability::TextProcessing | 
-           AICapability::SmartReply |
-           AICapability::ContentAnalysis;
+    return "Echo Test Service";
 }
 
-AIResult EchoAIService::processText(const std::string& input)
+std::string EchoAIService::getDescription() const
+{
+    return "Simple echo AI service used for testing";
+}
+
+AICapability EchoAIService::getCapabilities() const
+{
+    AICapability caps = AICapability::TextProcessing;
+    caps |= AICapability::SmartReply;
+    caps |= AICapability::ContentAnalysis;
+    return caps;
+}
+
+AIResult EchoAIService::processText(const std::string& input,
+                                    const std::string& context)
 {
     AIResult result;
     
@@ -56,6 +71,7 @@ AIResult EchoAIService::processText(const std::string& input)
         result.error_message = "服务未初始化";
         return result;
     }
+    Q_UNUSED(context);
     
     // 模拟处理延迟
     QThread::msleep(100);
@@ -65,13 +81,14 @@ AIResult EchoAIService::processText(const std::string& input)
     result.confidence = 1.0f;
     
     // 添加元数据
-    result.metadata["service"] = "echo";
-    result.metadata["input_length"] = std::to_string(input.length());
+    result.metadata.insert(QStringLiteral("service"), QStringLiteral("echo"));
+    result.metadata.insert(QStringLiteral("input_length"), static_cast<int>(input.length()));
     
     return result;
 }
 
-AIResult EchoAIService::processImage(const QImage& image)
+AIResult EchoAIService::processImage(const QImage& image,
+                                     const std::string& task)
 {
     AIResult result;
     
@@ -80,6 +97,7 @@ AIResult EchoAIService::processImage(const QImage& image)
         result.error_message = "服务未初始化";
         return result;
     }
+    Q_UNUSED(task);
     
     result.success = true;
     result.text_output = QString("图像尺寸: %1x%2 像素")
@@ -90,38 +108,17 @@ AIResult EchoAIService::processImage(const QImage& image)
     result.confidence = 1.0f;
     
     // 添加图像信息
-    result.metadata["width"] = std::to_string(image.width());
-    result.metadata["height"] = std::to_string(image.height());
-    result.metadata["format"] = std::to_string(image.format());
+    result.metadata.insert(QStringLiteral("width"), image.width());
+    result.metadata.insert(QStringLiteral("height"), image.height());
+    result.metadata.insert(QStringLiteral("format"), static_cast<int>(image.format()));
     
     return result;
 }
 
-void EchoAIService::processTextAsync(
-    const std::string& input,
-    AICallback callback)
-{
-    // 在单独线程中处理
-    std::thread([this, input, callback]() {
-        AIResult result = processText(input);
-        callback(result);
-    }).detach();
-}
-
-void EchoAIService::processImageAsync(
-    const QImage& image,
-    AICallback callback)
-{
-    // 在单独线程中处理
-    std::thread([this, image, callback]() {
-        AIResult result = processImage(image);
-        callback(result);
-    }).detach();
-}
-
 AIResult EchoAIService::processTextStream(
     const std::string& input,
-    AIStreamCallback stream_callback)
+    AIStreamCallback stream_callback,
+    const std::string& context)
 {
     AIResult result;
     
@@ -130,6 +127,7 @@ AIResult EchoAIService::processTextStream(
         result.error_message = "服务未初始化";
         return result;
     }
+    Q_UNUSED(context);
     
     m_cancel_requested = false;
     
@@ -145,11 +143,7 @@ AIResult EchoAIService::processTextStream(
         
         std::string token(1, response[i]);
         
-        if (!stream_callback(token, i == response.length() - 1)) {
-            result.success = false;
-            result.error_message = "流式回调返回false";
-            return result;
-        }
+        stream_callback(token, i == response.length() - 1);
         
         // 模拟延迟
         QThread::msleep(50);
@@ -160,6 +154,26 @@ AIResult EchoAIService::processTextStream(
     result.confidence = 1.0f;
     
     return result;
+}
+
+void EchoAIService::processTextAsync(const std::string& input,
+                                     AICallback callback,
+                                     const std::string& context)
+{
+    std::thread([this, input, callback, context]() {
+        AIResult result = processText(input, context);
+        callback(result);
+    }).detach();
+}
+
+void EchoAIService::processImageAsync(const QImage& image,
+                                      AICallback callback,
+                                      const std::string& task)
+{
+    std::thread([this, image, callback, task]() {
+        AIResult result = processImage(image, task);
+        callback(result);
+    }).detach();
 }
 
 AIResult EchoAIService::generateSmartReplies(
@@ -206,19 +220,15 @@ AIResult EchoAIService::analyzeContent(
             result.text_output = analyzeSentiment(content);
             result.confidence = 0.75f;
             break;
-            
         case ContentAnalysisType::SafetyFilter:
-            // 简单的关键词过滤
-            result.metadata["is_safe"] = "true";
-            result.metadata["reason"] = "通过基本检查";
+            result.metadata.insert(QStringLiteral("is_safe"), true);
+            result.metadata.insert(QStringLiteral("reason"), QStringLiteral("通过基本检查"));
             result.confidence = 0.9f;
             break;
-            
-        case ContentAnalysisType::LanguageDetection:
-            // 简单的语言检测
+        case ContentAnalysisType::LanguageDetection: {
             bool has_chinese = false;
-            for (char c : content) {
-                if (static_cast<unsigned char>(c) > 127) {
+            for (unsigned char c : content) {
+                if (c > 127) {
                     has_chinese = true;
                     break;
                 }
@@ -226,6 +236,7 @@ AIResult EchoAIService::analyzeContent(
             result.text_output = has_chinese ? "zh-CN" : "en-US";
             result.confidence = 0.85f;
             break;
+        }
     }
     
     return result;
@@ -235,6 +246,11 @@ bool EchoAIService::cancelOperation()
 {
     m_cancel_requested = true;
     return true;
+}
+
+void EchoAIService::resetContext()
+{
+    m_cancel_requested = false;
 }
 
 // ============================================================================
