@@ -2,6 +2,8 @@
 
 本文档使用Mermaid图表描述Kylin Messenger的程序结构和架构设计。
 
+重要更新：自 1.2 起，协议层已统一为 IPMSG/FeiQ 文本协议；历史自定义二进制协议与 ProtoBuf 编解码路径已移除，仅保留 IPMSG 语义与实现。
+
 ## 系统整体架构
 
 ```mermaid

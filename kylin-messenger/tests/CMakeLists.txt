@@ -67,20 +67,7 @@ else()
     find_package(Qt5 COMPONENTS Test REQUIRED)
 endif()
 
-# 测试可执行文件
-add_executable(test_network_protocol
-    test_network_protocol.cpp
-)
-
-target_link_libraries(test_network_protocol PRIVATE
-    ${PROJECT_NAME}-core
-    ${QT_PACKAGE_PREFIX}::Core
-    ${QT_PACKAGE_PREFIX}::Network
-    ZLIB::ZLIB
-    ${GTEST_LIB_TARGET}
-    ${GTEST_MAIN_TARGET}
-    Threads::Threads
-)
+# 移除依赖自定义协议的测试用例（统一到 IPMSG 后不再适用）
 
 add_executable(test_ai_service
     test_ai_service.cpp
@@ -95,12 +82,15 @@ target_link_libraries(test_ai_service PRIVATE
 )
 
 if(KYLIN_USING_FALLBACK_GTEST)
-    target_include_directories(test_network_protocol PRIVATE BEFORE ${_gtest_include_dir})
-    target_include_directories(test_ai_service PRIVATE BEFORE ${_gtest_include_dir})
+    if(TARGET test_network_protocol)
+        target_include_directories(test_network_protocol PRIVATE BEFORE ${_gtest_include_dir})
+    endif()
+    if(TARGET test_ai_service)
+        target_include_directories(test_ai_service PRIVATE BEFORE ${_gtest_include_dir})
+    endif()
 endif()
 
 # 注册测试
-add_test(NAME NetworkProtocolTest COMMAND test_network_protocol)
 add_test(NAME AIServiceTest COMMAND test_ai_service)
 
 add_executable(test_ui_smoke

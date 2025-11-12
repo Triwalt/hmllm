@@ -227,7 +227,6 @@ kylin-messenger_autogen/timestamp: \
   D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindGit.cmake \
   D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindPackageHandleStandardArgs.cmake \
   D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindPackageMessage.cmake \
-  D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindProtobuf.cmake \
   D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindThreads.cmake \
   D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindVulkan.cmake \
   D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindZLIB.cmake \

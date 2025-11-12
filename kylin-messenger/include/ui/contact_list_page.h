@@ -7,6 +7,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QComboBox>
+#include <memory>
 #include "core/models.h"
 #include "core/repositories/contact_repository.h"
 

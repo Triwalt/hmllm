@@ -24,6 +24,7 @@
 #include <QUdpSocket>
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QNetworkProxy>
 #include <algorithm>
 #include <limits>
 
@@ -335,10 +336,12 @@ bool NetworkManager::acceptFile(const QString& sender_id,
                                 quint32 file_id,
                                 const QString& save_path)
 {
-    Q_UNUSED(sender_id);
-
     const quint64 key = makeFileKey(packet_no, file_id);
     if (!m_incoming_file_index.contains(key)) {
+        qCWarning(lcIpmsg) << "Accept file failed; offer not found"
+                           << "packet" << packet_no
+                           << "file" << file_id
+                           << "requestedBy" << sender_id;
         emit networkError(QCoreApplication::translate("NetworkManager", "Requested file offer not found (packet %1, file %2)")
                               .arg(packet_no)
                               .arg(file_id));
@@ -347,9 +350,24 @@ bool NetworkManager::acceptFile(const QString& sender_id,
 
     IncomingFileOffer offer = m_incoming_file_index.value(key);
     if (!sender_id.isEmpty() && !offer.sender_id.isEmpty() && offer.sender_id != sender_id) {
+        qCWarning(lcIpmsg) << "Accept file failed; sender mismatch"
+                           << "expected" << offer.sender_id
+                           << "actual" << sender_id;
         emit networkError(QCoreApplication::translate("NetworkManager", "File offer belongs to another sender"));
         return false;
     }
+
+    const quint16 port = offer.sender_port == 0
+                             ? Network::kUdpDiscoveryPort
+                             : offer.sender_port;
+
+    qCInfo(lcIpmsg) << "ACCEPT FILE"
+                    << "packet" << packet_no
+                    << "file" << file_id
+                    << "from" << offer.sender_id
+                    << "address" << offer.sender_address.toString()
+                    << "port" << port
+                    << "save" << QDir::toNativeSeparators(save_path);
 
     QFileInfo targetInfo(save_path);
     QDir dir = targetInfo.absoluteDir();
@@ -361,6 +379,7 @@ bool NetworkManager::acceptFile(const QString& sender_id,
     }
 
     auto socket = new QTcpSocket(this);
+    socket->setProxy(QNetworkProxy::NoProxy);
     auto handle = QSharedPointer<QFile>::create(targetInfo.absoluteFilePath());
     if (!handle->open(QIODevice::WriteOnly)) {
         emit networkError(QCoreApplication::translate("NetworkManager", "Cannot open %1 for writing: %2")
@@ -386,12 +405,30 @@ bool NetworkManager::acceptFile(const QString& sender_id,
             this,
             &NetworkManager::handleReceiveSocketError);
 
+    qCDebug(lcIpmsg) << "Request GETFILEDATA"
+                     << "packet" << packet_no
+                     << "file" << file_id
+                     << "target" << offer.sender_address.toString();
+
     if (!sendGetFileData(offer.sender_address, packet_no, file_id, 0)) {
+        qCWarning(lcIpmsg) << "Failed to send GETFILEDATA command"
+                           << "packet" << packet_no
+                           << "file" << file_id;
         finalizeReceiveTransfer(socket, false, QStringLiteral("Failed to send GETFILEDATA command"));
         return false;
     }
 
-    socket->connectToHost(offer.sender_address, Network::kUdpDiscoveryPort);
+    connect(socket, &QTcpSocket::connected, this, [socket]() {
+        qCInfo(lcIpmsg) << "Receive socket connected"
+                        << socket->peerAddress().toString()
+                        << "port" << socket->peerPort();
+    });
+
+    // IPMSG 文件传输默认让接收方主动连接发送方监听端口
+    qCDebug(lcIpmsg) << "Connecting to sender"
+                     << offer.sender_address.toString()
+                     << "port" << port;
+    socket->connectToHost(offer.sender_address, port);
 
     return true;
 }
@@ -853,6 +890,12 @@ void NetworkManager::handlePresencePacket(const Network::IPMSG::Packet& packet,
                                           const QHostAddress& sender,
                                           bool is_answer)
 {
+    // 忽略本机包，避免自触发
+    if (isLocalPacket(packet, sender)) {
+        qCDebug(lcIpmsg) << "Ignore local presence packet from" << sender.toString();
+        return;
+    }
+
     const QStringList fields = splitAdditional(packet.additional);
     qCDebug(lcIpmsg) << "Presence additional raw" << packet.additional
                      << "fields" << fields;
@@ -883,7 +926,34 @@ void NetworkManager::handlePresencePacket(const Network::IPMSG::Packet& packet,
     info.status_text = status_text;
     info.group_name = group;
 
-    const QString user_id = makeUserId(info.username, sender);
+    // 尽量复用同一 user_id：优先按 IP 匹配已有用户，避免昵称变化导致重复上线
+    QString user_id;
+    const QString sender_ip = sender.toString();
+    for (auto it = m_online_users.constBegin(); it != m_online_users.constEnd(); ++it) {
+        if (it.value().ip_address == sender_ip) {
+            user_id = it.key();
+            break;
+        }
+    }
+    if (user_id.isEmpty()) {
+        user_id = makeUserId(info.username, sender);
+    }
+
+    // maintain group members: remove from any old groups
+    for (auto it = m_group_members.begin(); it != m_group_members.end(); ++it) {
+        if (it->contains(user_id)) {
+            it->remove(user_id);
+            // emit update for old group
+            const QList<UserInfo> members = getGroupMembers(it.key());
+            emit groupMembersUpdated(it.key(), members);
+        }
+    }
+    // add to current group if provided
+    if (!group.trimmed().isEmpty()) {
+        m_group_members[group].insert(user_id);
+        emit groupMembersUpdated(group, getGroupMembers(group));
+    }
+
     upsertUser(user_id, info, sender);
 
     if (!feiqDetails.isEmpty()) {
@@ -935,7 +1005,7 @@ void NetworkManager::handleSendMessagePacket(const Network::IPMSG::Packet& packe
     QList<IncomingFileOffer> offers;
     const bool has_attachments = packet.hasOption(Network::IPMSG::Option::FILEATTACHOPT) && !attachmentPart.isEmpty();
     if (has_attachments) {
-        offers = handleFileAttachments(user_id, sender, packet.packet_no, attachmentPart);
+    offers = handleFileAttachments(user_id, sender, sender_port, packet.packet_no, attachmentPart);
     }
 
     ChatMessage message;
@@ -1051,6 +1121,7 @@ void NetworkManager::handleRecvMessagePacket(const Network::IPMSG::Packet& packe
 
 QList<NetworkManager::IncomingFileOffer> NetworkManager::handleFileAttachments(const QString& senderId,
                                                                               const QHostAddress& senderAddress,
+                                                                              quint16 senderPort,
                                                                               quint32 packetNo,
                                                                               const QString& attachmentsPart)
 {
@@ -1095,6 +1166,7 @@ QList<NetworkManager::IncomingFileOffer> NetworkManager::handleFileAttachments(c
         IncomingFileOffer offer;
         offer.sender_id = senderId;
         offer.sender_address = senderAddress;
+    offer.sender_port = senderPort == 0 ? Network::kUdpDiscoveryPort : senderPort;
         offer.packet_no = packetNo;
         offer.file_id = fileId;
         offer.file_name = parts.size() > 1 ? parts.at(1) : QString();
@@ -1139,6 +1211,13 @@ void NetworkManager::handleExitPacket(const Network::IPMSG::Packet&,
     const QString user_id = makeUserId(QString(), sender);
     if (m_online_users.contains(user_id)) {
         qCInfo(lcIpmsg) << "BR_EXIT" << user_id;
+        // remove from all groups first
+        for (auto it = m_group_members.begin(); it != m_group_members.end(); ++it) {
+            if (it->contains(user_id)) {
+                it->remove(user_id);
+                emit groupMembersUpdated(it.key(), getGroupMembers(it.key()));
+            }
+        }
         removeUser(user_id);
     }
 }
@@ -1248,11 +1327,40 @@ void NetworkManager::processPendingSend(QTcpSocket* socket)
 
     const QString ipKey = socket->peerAddress().toString();
     auto listIt = m_pending_send_transfers.find(ipKey);
+    // If there's no direct match by peerAddress string, try a relaxed search.
     if (listIt == m_pending_send_transfers.end() || listIt->isEmpty()) {
-        qCWarning(lcIpmsg) << "No pending file transfer for" << ipKey;
-        socket->close();
+        // Fallback: the stored pending entry might be keyed by a different local
+        // address (e.g. host IP) while the incoming TCP connection shows as
+        // loopback (127.0.0.1 ::1) or vice versa. Try to find a candidate by
+        // comparing stored peer_address values.
+        const QString peerStr = socket->peerAddress().toString();
+        bool found = false;
+        for (auto it = m_pending_send_transfers.begin(); it != m_pending_send_transfers.end(); ++it) {
+            if (it->isEmpty()) continue;
+            const PendingSendTransfer& candidate = it->first();
+            const QString candAddr = candidate.file.peer_address.toString();
+            // Exact match
+            if (candAddr == peerStr) {
+                listIt = it;
+                found = true;
+                break;
+            }
+            // Both loopback addresses (127.0.0.1 ::1)
+            QHostAddress candHost(candidate.file.peer_address);
+            QHostAddress sockHost(socket->peerAddress());
+            if (candHost.isLoopback() && sockHost.isLoopback()) {
+                listIt = it;
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            qCWarning(lcIpmsg) << "No pending file transfer for" << ipKey << "or fallback candidates";
+            socket->close();
             socket->deleteLater();
-        return;
+            return;
+        }
     }
 
     PendingSendTransfer pending = listIt->takeFirst();
@@ -1441,18 +1549,30 @@ void NetworkManager::handleReceiveSocketDisconnected()
         return;
     }
 
-    const bool success = (it.value().expected_size == 0) ||
-                         (it.value().bytes_received >= it.value().expected_size);
+    const ActiveReceiveTransfer& transfer = it.value();
+    const bool success = (transfer.expected_size == 0) ||
+                         (transfer.bytes_received >= transfer.expected_size);
+    qCInfo(lcIpmsg) << "Receive socket disconnected"
+                    << socket->peerAddress().toString()
+                    << "port" << socket->peerPort()
+                    << "received" << transfer.bytes_received
+                    << "expected" << transfer.expected_size
+                    << "success" << success;
     finalizeReceiveTransfer(socket, success,
                             success ? QString() : QStringLiteral("Transfer ended prematurely"));
 }
 
-void NetworkManager::handleReceiveSocketError(QAbstractSocket::SocketError)
+void NetworkManager::handleReceiveSocketError(QAbstractSocket::SocketError error)
 {
     QTcpSocket* socket = qobject_cast<QTcpSocket*>(sender());
     if (!socket) {
         return;
     }
+    qCWarning(lcIpmsg) << "Receive socket error"
+                       << socket->peerAddress().toString()
+                       << "port" << socket->peerPort()
+                       << "error" << error
+                       << socket->errorString();
     finalizeReceiveTransfer(socket, false, socket->errorString());
 }
 
@@ -1566,7 +1686,8 @@ void NetworkManager::setupFileServer()
         return;
     }
 
-    if (!m_file_server->listen(QHostAddress::AnyIPv4, Network::kUdpDiscoveryPort)) {
+    // 监听 TCP 端口（与 UDP 发现端口区分）
+    if (!m_file_server->listen(QHostAddress::AnyIPv4, Network::kTcpListenPort)) {
         qCWarning(lcIpmsg) << "Failed to start file server:" << m_file_server->errorString();
     } else {
         qCInfo(lcIpmsg) << "File server listening on TCP port" << m_file_server->serverPort();
@@ -1854,6 +1975,23 @@ bool NetworkManager::isLocalPacket(const Network::IPMSG::Packet& packet,
         qCDebug(lcIpmsg) << "Packet from local IP" << sender_ip;
     }
     return is_local;
+}
+
+QList<UserInfo> NetworkManager::getGroupMembers(const QString& group_id) const
+{
+    QList<UserInfo> result;
+    if (!m_group_members.contains(group_id)) {
+        return result;
+    }
+    const QSet<QString>& ids = m_group_members.value(group_id);
+    result.reserve(ids.size());
+    for (const QString& id : ids) {
+        auto it = m_online_users.find(id);
+        if (it != m_online_users.end()) {
+            result.append(it.value());
+        }
+    }
+    return result;
 }
 
 } // namespace KylinMessenger

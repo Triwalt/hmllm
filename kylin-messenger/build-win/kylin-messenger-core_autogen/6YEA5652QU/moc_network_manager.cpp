@@ -8,6 +8,7 @@
 
 #include "../../../include/network_manager.h"
 #include <QtCore/qmetatype.h>
+#include <QtCore/QList>
 
 #include <QtCore/qtmochelpers.h>
 
@@ -74,6 +75,9 @@ template <> constexpr inline auto KylinMessenger::NetworkManager::qt_create_meta
         "messageId",
         "networkError",
         "error",
+        "groupMembersUpdated",
+        "QList<UserInfo>",
+        "members",
         "handleUdpData",
         "broadcastPresence",
         "cleanupOfflineUsers",
@@ -144,33 +148,37 @@ template <> constexpr inline auto KylinMessenger::NetworkManager::qt_create_meta
         QtMocHelpers::SignalData<void(const QString &)>(34, 2, QMC::AccessPublic, QMetaType::Void, {{
             { QMetaType::QString, 35 },
         }}),
+        // Signal 'groupMembersUpdated'
+        QtMocHelpers::SignalData<void(const QString &, const QList<UserInfo> &)>(36, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 12 }, { 0x80000000 | 37, 38 },
+        }}),
         // Slot 'handleUdpData'
-        QtMocHelpers::SlotData<void()>(36, 2, QMC::AccessPrivate, QMetaType::Void),
-        // Slot 'broadcastPresence'
-        QtMocHelpers::SlotData<void()>(37, 2, QMC::AccessPrivate, QMetaType::Void),
-        // Slot 'cleanupOfflineUsers'
-        QtMocHelpers::SlotData<void()>(38, 2, QMC::AccessPrivate, QMetaType::Void),
-        // Slot 'retryPendingMessages'
         QtMocHelpers::SlotData<void()>(39, 2, QMC::AccessPrivate, QMetaType::Void),
-        // Slot 'handleFileServerConnection'
+        // Slot 'broadcastPresence'
         QtMocHelpers::SlotData<void()>(40, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'cleanupOfflineUsers'
+        QtMocHelpers::SlotData<void()>(41, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'retryPendingMessages'
+        QtMocHelpers::SlotData<void()>(42, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'handleFileServerConnection'
+        QtMocHelpers::SlotData<void()>(43, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'handleFileSocketBytesWritten'
-        QtMocHelpers::SlotData<void(qint64)>(41, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { QMetaType::LongLong, 42 },
+        QtMocHelpers::SlotData<void(qint64)>(44, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::LongLong, 45 },
         }}),
         // Slot 'handleFileSocketDisconnected'
-        QtMocHelpers::SlotData<void()>(43, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(46, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'handleFileSocketError'
-        QtMocHelpers::SlotData<void(QAbstractSocket::SocketError)>(44, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { 0x80000000 | 45, 35 },
+        QtMocHelpers::SlotData<void(QAbstractSocket::SocketError)>(47, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { 0x80000000 | 48, 35 },
         }}),
         // Slot 'handleReceiveSocketReadyRead'
-        QtMocHelpers::SlotData<void()>(46, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(49, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'handleReceiveSocketDisconnected'
-        QtMocHelpers::SlotData<void()>(47, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(50, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'handleReceiveSocketError'
-        QtMocHelpers::SlotData<void(QAbstractSocket::SocketError)>(48, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { 0x80000000 | 45, 35 },
+        QtMocHelpers::SlotData<void(QAbstractSocket::SocketError)>(51, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { 0x80000000 | 48, 35 },
         }}),
     };
     QtMocHelpers::UintData qt_properties {
@@ -208,31 +216,32 @@ void KylinMessenger::NetworkManager::qt_static_metacall(QObject *_o, QMetaObject
         case 10: _t->typingIndicator((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<bool>>(_a[2]))); break;
         case 11: _t->messageRead((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
         case 12: _t->networkError((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
-        case 13: _t->handleUdpData(); break;
-        case 14: _t->broadcastPresence(); break;
-        case 15: _t->cleanupOfflineUsers(); break;
-        case 16: _t->retryPendingMessages(); break;
-        case 17: _t->handleFileServerConnection(); break;
-        case 18: _t->handleFileSocketBytesWritten((*reinterpret_cast< std::add_pointer_t<qint64>>(_a[1]))); break;
-        case 19: _t->handleFileSocketDisconnected(); break;
-        case 20: _t->handleFileSocketError((*reinterpret_cast< std::add_pointer_t<QAbstractSocket::SocketError>>(_a[1]))); break;
-        case 21: _t->handleReceiveSocketReadyRead(); break;
-        case 22: _t->handleReceiveSocketDisconnected(); break;
-        case 23: _t->handleReceiveSocketError((*reinterpret_cast< std::add_pointer_t<QAbstractSocket::SocketError>>(_a[1]))); break;
+        case 13: _t->groupMembersUpdated((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<QList<UserInfo>>>(_a[2]))); break;
+        case 14: _t->handleUdpData(); break;
+        case 15: _t->broadcastPresence(); break;
+        case 16: _t->cleanupOfflineUsers(); break;
+        case 17: _t->retryPendingMessages(); break;
+        case 18: _t->handleFileServerConnection(); break;
+        case 19: _t->handleFileSocketBytesWritten((*reinterpret_cast< std::add_pointer_t<qint64>>(_a[1]))); break;
+        case 20: _t->handleFileSocketDisconnected(); break;
+        case 21: _t->handleFileSocketError((*reinterpret_cast< std::add_pointer_t<QAbstractSocket::SocketError>>(_a[1]))); break;
+        case 22: _t->handleReceiveSocketReadyRead(); break;
+        case 23: _t->handleReceiveSocketDisconnected(); break;
+        case 24: _t->handleReceiveSocketError((*reinterpret_cast< std::add_pointer_t<QAbstractSocket::SocketError>>(_a[1]))); break;
         default: ;
         }
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
         switch (_id) {
         default: *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType(); break;
-        case 20:
+        case 21:
             switch (*reinterpret_cast<int*>(_a[1])) {
             default: *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType(); break;
             case 0:
                 *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType::fromType< QAbstractSocket::SocketError >(); break;
             }
             break;
-        case 23:
+        case 24:
             switch (*reinterpret_cast<int*>(_a[1])) {
             default: *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType(); break;
             case 0:
@@ -268,6 +277,8 @@ void KylinMessenger::NetworkManager::qt_static_metacall(QObject *_o, QMetaObject
             return;
         if (QtMocHelpers::indexOfMethod<void (NetworkManager::*)(const QString & )>(_a, &NetworkManager::networkError, 12))
             return;
+        if (QtMocHelpers::indexOfMethod<void (NetworkManager::*)(const QString & , const QList<UserInfo> & )>(_a, &NetworkManager::groupMembersUpdated, 13))
+            return;
     }
 }
 
@@ -290,14 +301,14 @@ int KylinMessenger::NetworkManager::qt_metacall(QMetaObject::Call _c, int _id, v
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 24)
+        if (_id < 25)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 24;
+        _id -= 25;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 24)
+        if (_id < 25)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 24;
+        _id -= 25;
     }
     return _id;
 }
@@ -378,5 +389,11 @@ void KylinMessenger::NetworkManager::messageRead(const QString & _t1)
 void KylinMessenger::NetworkManager::networkError(const QString & _t1)
 {
     QMetaObject::activate<void>(this, &staticMetaObject, 12, nullptr, _t1);
+}
+
+// SIGNAL 13
+void KylinMessenger::NetworkManager::groupMembersUpdated(const QString & _t1, const QList<UserInfo> & _t2)
+{
+    QMetaObject::activate<void>(this, &staticMetaObject, 13, nullptr, _t1, _t2);
 }
 QT_WARNING_POP

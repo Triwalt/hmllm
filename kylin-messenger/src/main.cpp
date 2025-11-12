@@ -113,7 +113,11 @@ void fileMessageHandler(QtMsgType type,
 void setupLogging()
 {
     if (!qEnvironmentVariableIsSet("QT_LOGGING_RULES") || qEnvironmentVariable("QT_LOGGING_RULES").trimmed().isEmpty()) {
-        QLoggingCategory::setFilterRules(QStringLiteral("kylin.ipmsg.info=true\nkylin.ipmsg.debug=true"));
+        // 默认关闭默认分类的 info 日志，开启 IPMSG 分类
+        QLoggingCategory::setFilterRules(QStringLiteral(
+            "default.info=false\n"
+            "kylin.ipmsg.info=true\n"
+            "kylin.ipmsg.debug=true"));
     }
 
     qInstallMessageHandler(fileMessageHandler);

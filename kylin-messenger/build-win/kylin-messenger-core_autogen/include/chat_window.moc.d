@@ -3,6 +3,7 @@ E:/Project/hmllm/kylin-messenger/build-win/kylin-messenger-core_autogen/include/
   D:/Qt/6.9.3/mingw_64/include/QtCore/QBuffer \
   D:/Qt/6.9.3/mingw_64/include/QtCore/QByteArray \
   D:/Qt/6.9.3/mingw_64/include/QtCore/QCryptographicHash \
+  D:/Qt/6.9.3/mingw_64/include/QtCore/QDataStream \
   D:/Qt/6.9.3/mingw_64/include/QtCore/QDateTime \
   D:/Qt/6.9.3/mingw_64/include/QtCore/QDebug \
   D:/Qt/6.9.3/mingw_64/include/QtCore/QDir \
@@ -10,7 +11,6 @@ E:/Project/hmllm/kylin-messenger/build-win/kylin-messenger-core_autogen/include/
   D:/Qt/6.9.3/mingw_64/include/QtCore/QFile \
   D:/Qt/6.9.3/mingw_64/include/QtCore/QFileInfo \
   D:/Qt/6.9.3/mingw_64/include/QtCore/QHash \
-  D:/Qt/6.9.3/mingw_64/include/QtCore/QLatin1StringView \
   D:/Qt/6.9.3/mingw_64/include/QtCore/QList \
   D:/Qt/6.9.3/mingw_64/include/QtCore/QLoggingCategory \
   D:/Qt/6.9.3/mingw_64/include/QtCore/QMap \
@@ -257,6 +257,7 @@ E:/Project/hmllm/kylin-messenger/build-win/kylin-messenger-core_autogen/include/
   D:/Qt/6.9.3/mingw_64/include/QtNetwork/qtnetworkexports.h \
   D:/Qt/6.9.3/mingw_64/include/QtNetwork/qtnetworkglobal.h \
   D:/Qt/6.9.3/mingw_64/include/QtNetwork/qudpsocket.h \
+  D:/Qt/6.9.3/mingw_64/include/QtWidgets/QDialog \
   D:/Qt/6.9.3/mingw_64/include/QtWidgets/QFileDialog \
   D:/Qt/6.9.3/mingw_64/include/QtWidgets/QFrame \
   D:/Qt/6.9.3/mingw_64/include/QtWidgets/QGridLayout \
@@ -563,4 +564,6 @@ E:/Project/hmllm/kylin-messenger/build-win/kylin-messenger-core_autogen/include/
   E:/Project/hmllm/kylin-messenger/include/network/ipmsg.h \
   E:/Project/hmllm/kylin-messenger/include/network/payload_tags.h \
   E:/Project/hmllm/kylin-messenger/include/network_manager.h \
-  E:/Project/hmllm/kylin-messenger/include/network_protocol.h
+  E:/Project/hmllm/kylin-messenger/include/network_protocol.h \
+  E:/Project/hmllm/kylin-messenger/include/qt_compat.h \
+  E:/Project/hmllm/kylin-messenger/include/ui/file_transfer_dialog.h

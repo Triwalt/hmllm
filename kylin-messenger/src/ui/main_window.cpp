@@ -168,6 +168,15 @@ void MainWindow::setNetworkManager(NetworkManager* network_manager)
         connect(m_network_manager, &NetworkManager::groupMessageReceived,
                 this, &MainWindow::onGroupMessageReceived);
 
+        connect(m_network_manager, &NetworkManager::groupMembersUpdated,
+                this, [this](const QString& group_id, const QList<Core::UserInfo>& members) {
+                    QString key = QStringLiteral("group:%1").arg(group_id);
+                    ChatWindow* wnd = findChatWindow(key);
+                    if (wnd) {
+                        wnd->updateGroupMembers(members);
+                    }
+                });
+
         // 文件接收流程：收到文件提供后提示保存并调用 acceptFile
         connect(m_network_manager, &NetworkManager::fileOfferReceived,
                 this, [this](const QString& senderId,
@@ -357,6 +366,7 @@ void MainWindow::setupUI()
     m_user_context_menu->addAction("发送文件", this, &MainWindow::onSendFile);
     m_user_context_menu->addSeparator();
     m_view_info_action = m_user_context_menu->addAction("查看信息", this, &MainWindow::onViewUserInfo);
+    m_user_context_menu->addAction("添加到联系人", this, &MainWindow::onAddContactFromContext);
     
     qInfo() << "[MainWindow::setupUI] 完成";
 }
@@ -367,11 +377,21 @@ void MainWindow::setupMenuBar()
     m_file_menu = menuBar()->addMenu("文件(&F)");
     m_file_menu->addAction("设置...", this, &MainWindow::onSettings);
     m_file_menu->addSeparator();
-    m_file_menu->addAction("退出", QKeySequence::Quit, this, &MainWindow::onQuit);
+    {
+        QAction* quitAction = new QAction("退出", this);
+        quitAction->setShortcut(QKeySequence::Quit);
+        connect(quitAction, &QAction::triggered, this, &MainWindow::onQuit);
+        m_file_menu->addAction(quitAction);
+    }
     
     // 工具菜单
     m_tools_menu = menuBar()->addMenu("工具(&T)");
-    m_tools_menu->addAction("截图工具", QKeySequence("Ctrl+Alt+A"), this, &MainWindow::onSendScreenshot);
+    {
+        QAction* screenshotAction = new QAction("截图工具", this);
+        screenshotAction->setShortcut(QKeySequence("Ctrl+Alt+A"));
+        connect(screenshotAction, &QAction::triggered, this, &MainWindow::onSendScreenshot);
+        m_tools_menu->addAction(screenshotAction);
+    }
     m_tools_menu->addAction("AI聊天助手", this, &MainWindow::onOpenAIChat);
     
     // 帮助菜单
@@ -589,8 +609,7 @@ void MainWindow::onMessageReceived(const Core::ChatMessage& message)
 
 void MainWindow::showUserContextMenu(const QPoint& pos, const Core::UserInfo& user_info)
 {
-    Q_UNUSED(user_info);
-    m_current_context_item = nullptr;  // 不再使用QListWidgetItem
+    m_context_user_info = user_info;
     m_user_context_menu->exec(pos);
 }
 
@@ -603,10 +622,45 @@ void MainWindow::onPageChanged(int index)
 
 void MainWindow::onViewUserInfo()
 {
-    // 查看用户信息功能
-    // 由于用户列表已迁移到 UserListPage，这里需要从当前选中的用户获取信息
-    // 暂时显示提示，实际应该从右键菜单的上下文获取用户信息
-    QMessageBox::information(this, "提示", "查看用户信息功能需要从用户列表页面选择用户");
+    if (m_context_user_info.user_id.isEmpty()) {
+        QMessageBox::information(this, "提示", "请从用户列表选择用户再查看信息");
+        return;
+    }
+    QMap<QString, QString> details;
+    if (m_network_manager) {
+        details = m_network_manager->getUserDetails(m_context_user_info.user_id);
+    }
+    showUserInfoDialog(m_context_user_info, details);
+}
+
+void MainWindow::onAddContactFromContext()
+{
+    if (!m_contact_repository) {
+        QMessageBox::warning(this, "提示", "联系人仓库未初始化");
+        return;
+    }
+    if (m_context_user_info.user_id.isEmpty()) {
+        QMessageBox::information(this, "提示", "请从用户列表选择用户");
+        return;
+    }
+    Core::ContactInfo c;
+    c.contact_id = m_context_user_info.user_id;
+    c.display_name = userDisplayName(m_context_user_info);
+    c.username = m_context_user_info.username;
+    c.hostname = m_context_user_info.hostname;
+    c.ip_address = m_context_user_info.ip_address;
+    c.group_name = m_context_user_info.group_name;
+    c.notes = QString();
+    c.created_at = QDateTime::currentDateTime();
+    c.last_seen = QDateTime::currentDateTime();
+    if (m_contact_repository->saveContact(c)) {
+        QMessageBox::information(this, "成功", QStringLiteral("已将 %1 添加到联系人").arg(c.display_name));
+        if (m_contact_list_page) {
+            m_contact_list_page->refreshContactList();
+        }
+    } else {
+        QMessageBox::warning(this, "失败", "保存联系人失败");
+    }
 }
 
 void MainWindow::onSearchTextChanged(const QString& text)
@@ -1058,16 +1112,30 @@ void MainWindow::updateUserList()
         m_user_list_page->updateUserList();
     }
     
+    if (!m_user_count_label) {
+        return;
+    }
+
     if (m_network_manager) {
-        int count = m_network_manager->getOnlineUsers().size();
-        int total = count + 1; // 包含本机回环测试
-        if (m_user_count_label) {
-        m_user_count_label->setText(QString("在线用户: %1 (含本机测试)").arg(total));
+        const QList<Core::UserInfo> users = m_network_manager->getOnlineUsers();
+        const int total = users.size();
+        const bool has_loopback = std::any_of(users.cbegin(), users.cend(), [this](const Core::UserInfo& info) {
+            if (!m_loopback_user.user_id.isEmpty() && info.user_id == m_loopback_user.user_id) {
+                return true;
+            }
+            if (!m_loopback_user.ip_address.isEmpty() && info.ip_address == m_loopback_user.ip_address) {
+                return true;
+            }
+            return false;
+        });
+
+        QString label = QStringLiteral("在线用户: %1").arg(total);
+        if (has_loopback && total > 0) {
+            label.append(QStringLiteral("（含本机测试）"));
         }
+        m_user_count_label->setText(label);
     } else {
-        if (m_user_count_label) {
-        m_user_count_label->setText(QStringLiteral("在线用户: 1 (含本机测试)"));
-        }
+        m_user_count_label->setText(QStringLiteral("在线用户: 0"));
     }
 }
 

@@ -3,5 +3,6 @@
 #include "6YEA5652QU/moc_main_window.cpp"
 #include "6YEA5652QU/moc_network_manager.cpp"
 #include "JCP2AIONHY/moc_contact_list_page.cpp"
+#include "JCP2AIONHY/moc_file_transfer_dialog.cpp"
 #include "JCP2AIONHY/moc_group_list_page.cpp"
 #include "JCP2AIONHY/moc_user_list_page.cpp"

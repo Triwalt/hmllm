@@ -70,7 +70,8 @@ template <> constexpr inline auto KylinMessenger::MainWindow::qt_create_metaobje
         "onTrayIconActivated",
         "QSystemTrayIcon::ActivationReason",
         "reason",
-        "onTrayIconMessageClicked"
+        "onTrayIconMessageClicked",
+        "onAddContactFromContext"
     };
 
     QtMocHelpers::UintData qt_methods {
@@ -132,6 +133,8 @@ template <> constexpr inline auto KylinMessenger::MainWindow::qt_create_metaobje
         }}),
         // Slot 'onTrayIconMessageClicked'
         QtMocHelpers::SlotData<void()>(31, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'onAddContactFromContext'
+        QtMocHelpers::SlotData<void()>(32, 2, QMC::AccessPrivate, QMetaType::Void),
     };
     QtMocHelpers::UintData qt_properties {
     };
@@ -174,6 +177,7 @@ void KylinMessenger::MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Ca
         case 16: _t->onQuit(); break;
         case 17: _t->onTrayIconActivated((*reinterpret_cast< std::add_pointer_t<QSystemTrayIcon::ActivationReason>>(_a[1]))); break;
         case 18: _t->onTrayIconMessageClicked(); break;
+        case 19: _t->onAddContactFromContext(); break;
         default: ;
         }
     }
@@ -198,14 +202,14 @@ int KylinMessenger::MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void 
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 19)
+        if (_id < 20)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 19;
+        _id -= 20;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 19)
+        if (_id < 20)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 19;
+        _id -= 20;
     }
     return _id;
 }

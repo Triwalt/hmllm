@@ -1,6 +1,8 @@
 # Build directories
 build/
 cmake-build-*/
+build-win/
+build-win-*/
 
 # Compiled Object files
 *.slo

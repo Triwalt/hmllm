@@ -71,19 +71,19 @@ FeiQ-specific extensions include:
    - File transfer is negotiated via `SENDMSG` + `FILEATTACHOPT`; FeiQ then opens a separate TCP port (default 2425 or negotiated) for the actual transfer protocol.
    - Attachment descriptors inform peer about name, size, modify time, permissions.
 
-## Mapping Targets for Kylin Messenger
+## Current Mapping in Kylin Messenger
 
-| Feature | Current Implementation | Target IPMSG Approach |
-| ------- | ---------------------- | --------------------- |
-| Presence broadcast | Custom `NetworkPacket::createPresencePacket` over UDP | Replace with `BR_ENTRY`/`ANS_ENTRY`/`BR_EXIT` handling, remove custom header. |
-| Reliable messaging | TCP sockets with custom framing | Use UDP `SENDMSG` with `SENDCHECK` + optional delivery tracking; rely on IPMSG semantics. |
-| Typing indicators | Custom `TypingIndicator` message type | Not part of IPMSG; needs optional FeiQ extension or remove until mapped to supported feature. |
-| File share offer | Custom `FileOffer` packet | Encode using `FILEATTACHOPT` descriptors and follow FeiQ transfer handshake. |
-| ProtoBuf support | Optional | Remove; IPMSG uses plain-text payloads. |
+| Feature | Implementation |
+| ------- | -------------- |
+| Presence broadcast | `BR_ENTRY`/`ANS_ENTRY`/`BR_EXIT`（仅保留 IPMSG，已移除自定义头部与序列化） |
+| Reliable messaging | UDP `SENDMSG` + `SENDCHECK`，接收方回 `RECVMSG`；发送端按超时重试，重试上限后报错 |
+| Read receipt | 使用 `READMSG`，打开消息后由本地发送，接收方更新已读状态 |
+| Group/broadcast | 通过 `BROADCASTOPT`，并在 `additional` 中携带 `GROUP:group_id:content` 约定 |
+| File share offer | `FILEATTACHOPT` 描述符 + 独立 TCP 传输，校验大小/偏移/错误，回 `RELEASEFILES` |
+| Typing indicators | 暂不内置（非 IPMSG 标准）；可通过扩展键值保留向下兼容空间 |
+| ProtoBuf support | 已移除 |
 
-## Next Steps
+## Notes
 
-1. Replace UDP/TCP handling code with IPMSG-specific packet flow.
-2. Map `UserInfo` serialization/deserialization to FeiQ fields.
-3. Align message sending/receiving with `SENDMSG`/`RECVMSG` handshake.
-4. Introduce file descriptor parsing for attachments in later stage.
+- 本项目已统一到 IPMSG/FeiQ 文本协议，移除了自定义二进制头与 ProtoBuf 路径。
+- 可靠消息通过 IPMSG 语义（`SENDCHECK`/`RECVMSG`）实现；仅文件数据使用 TCP 通道。

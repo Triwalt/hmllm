@@ -7,10 +7,6 @@
 	"CMAKE_LIST_FILES" : 
 	[
 		"E:/Project/hmllm/kylin-messenger/CMakeLists.txt",
-		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindProtobuf.cmake",
-		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/SelectLibraryConfigurations.cmake",
-		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindPackageHandleStandardArgs.cmake",
-		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindPackageMessage.cmake",
 		"E:/Project/hmllm/kylin-messenger/build-win/CMakeFiles/3.28.1/CMakeSystem.cmake",
 		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeSystemSpecificInitialize.cmake",
 		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/Platform/Windows-Initialize.cmake",

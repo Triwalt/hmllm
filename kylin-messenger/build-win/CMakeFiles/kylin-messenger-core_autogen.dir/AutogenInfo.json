@@ -7,10 +7,6 @@
 	"CMAKE_LIST_FILES" : 
 	[
 		"E:/Project/hmllm/kylin-messenger/CMakeLists.txt",
-		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindProtobuf.cmake",
-		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/SelectLibraryConfigurations.cmake",
-		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindPackageHandleStandardArgs.cmake",
-		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindPackageMessage.cmake",
 		"E:/Project/hmllm/kylin-messenger/build-win/CMakeFiles/3.28.1/CMakeSystem.cmake",
 		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CMakeSystemSpecificInitialize.cmake",
 		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/Platform/Windows-Initialize.cmake",
@@ -495,6 +491,12 @@
 			null
 		],
 		[
+			"E:/Project/hmllm/kylin-messenger/include/ui/file_transfer_dialog.h",
+			"MU",
+			"JCP2AIONHY/moc_file_transfer_dialog.cpp",
+			null
+		],
+		[
 			"E:/Project/hmllm/kylin-messenger/include/ui/group_list_page.h",
 			"MU",
 			"JCP2AIONHY/moc_group_list_page.cpp",
@@ -626,6 +628,11 @@
 		[ "E:/Project/hmllm/kylin-messenger/src/ui/chat_window.cpp", "MU", null ],
 		[
 			"E:/Project/hmllm/kylin-messenger/src/ui/contact_list_page.cpp",
+			"MU",
+			null
+		],
+		[
+			"E:/Project/hmllm/kylin-messenger/src/ui/file_transfer_dialog.cpp",
 			"MU",
 			null
 		],
