@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/scripts">
+        <file>nsfw_review.py</file>
+    </qresource>
+</RCC>
+

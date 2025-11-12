@@ -2,83 +2,165 @@
 #include <QApplication>
 #include <QMessageBox>
 #include <QDebug>
-#include <QFile>
 #include <QDateTime>
 #include <QUuid>
-#include <iostream>
+#include <QResource>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QLoggingCategory>
+#include <QMutex>
+#include <QMutexLocker>
+#include <QStandardPaths>
+#include <QTextStream>
+#include <cstdio>
+#include <QCoreApplication>
+#include <memory>
 
 #include "main_window.h"
 #include "network_manager.h"
 #include "ai_service_factory.h"
+#include "compliance_stub_service.h"
+#include "nsfw_compliance_service.h"
+#include "rknn_nsfw_compliance_service.h"
+#include "version_info.h"
+#include "core/logging.h"
+#include "core/di/service_locator.h"
+#include "core/repositories/message_repository.h"
 
 using namespace KylinMessenger;
 
-// 日志处理器
-void messageHandler(QtMsgType type, const QMessageLogContext& context, 
-                   const QString& msg)
+namespace {
+
+QString ensureLogFilePath()
 {
-    QString log_level;
-    switch (type) {
+    static QString logfile;
+    if (!logfile.isEmpty()) {
+        return logfile;
+    }
+
+    QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (base.isEmpty()) {
+        base = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    }
+    if (base.isEmpty()) {
+        base = QDir::tempPath();
+    }
+
+    QDir dir(base);
+    if (!dir.exists()) {
+        dir.mkpath(".");
+    }
+
+    logfile = dir.filePath(QStringLiteral("kylin-messenger/ipmsg.log"));
+    QDir logDir = QFileInfo(logfile).dir();
+    if (!logDir.exists()) {
+        logDir.mkpath(".");
+    }
+    return logfile;
+}
+
+void fileMessageHandler(QtMsgType type,
+                        const QMessageLogContext& context,
+                        const QString& msg)
+{
+    static QMutex mutex;
+    QMutexLocker locker(&mutex);
+
+    const QString level = [type]() {
+        switch (type) {
         case QtDebugMsg:
-            log_level = "DEBUG";
-            break;
+            return QStringLiteral("DEBUG");
         case QtInfoMsg:
-            log_level = "INFO";
-            break;
+            return QStringLiteral("INFO");
         case QtWarningMsg:
-            log_level = "WARN";
-            break;
+            return QStringLiteral("WARN");
         case QtCriticalMsg:
-            log_level = "ERROR";
-            break;
+            return QStringLiteral("CRIT");
         case QtFatalMsg:
-            log_level = "FATAL";
-            break;
+            return QStringLiteral("FATAL");
+        }
+        return QStringLiteral("LOG");
+    }();
+
+    const QString category = context.category ? QString::fromUtf8(context.category) : QStringLiteral("default");
+    const QString line = QStringLiteral("%1 [%2] (%3) %4")
+                             .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz"),
+                                  level,
+                                  category,
+                                  msg);
+
+    QTextStream stderrStream(stderr);
+    stderrStream << line
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                 << Qt::endl;
+#else
+                 << endl;
+#endif
+
+    QFile file(ensureLogFilePath());
+    if (file.open(QIODevice::Append | QIODevice::Text)) {
+        QTextStream out(&file);
+        out << line << '\n';
+        out.flush();
     }
-    
-    QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
-    QString log_message = QString("[%1] [%2] %3")
-        .arg(timestamp)
-        .arg(log_level)
-        .arg(msg);
-    
-    // 输出到控制台
-    std::cerr << log_message.toStdString() << std::endl;
-    
-    // 输出到日志文件
-    QFile log_file("kylin-messenger.log");
-    if (log_file.open(QIODevice::WriteOnly | QIODevice::Append)) {
-        QTextStream stream(&log_file);
-        stream << log_message << "\n";
-        log_file.close();
-    }
-    
+
     if (type == QtFatalMsg) {
         abort();
     }
 }
 
+void setupLogging()
+{
+    if (!qEnvironmentVariableIsSet("QT_LOGGING_RULES") || qEnvironmentVariable("QT_LOGGING_RULES").trimmed().isEmpty()) {
+        QLoggingCategory::setFilterRules(QStringLiteral("kylin.ipmsg.info=true\nkylin.ipmsg.debug=true"));
+    }
+
+    qInstallMessageHandler(fileMessageHandler);
+
+    QFile file(ensureLogFilePath());
+    if (file.open(QIODevice::Append | QIODevice::Text)) {
+        QTextStream out(&file);
+        out << "\n===== Session start "
+            << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz")
+            << " =====\n";
+    }
+
+    qInfo() << "日志输出路径:" << ensureLogFilePath();
+}
+
+} // namespace
+
 int main(int argc, char* argv[])
 {
-    // 安装日志处理器
-    qInstallMessageHandler(messageHandler);
-    
+    setupLogging();
     QApplication app(argc, argv);
+    Core::Logging::initialize();
+    auto& locator = Core::DI::ServiceLocator::instance();
+    Q_INIT_RESOURCE(icons);
+    Q_INIT_RESOURCE(emojis);
+    Q_INIT_RESOURCE(themes);
+#ifdef ENABLE_NSFW
+    Q_INIT_RESOURCE(scripts);
+#endif
     
     // 设置应用程序信息
     QApplication::setApplicationName("Kylin Messenger");
-    QApplication::setApplicationVersion("1.0.0");
+    QApplication::setApplicationVersion(KylinMessenger::kAppVersion);
     QApplication::setOrganizationName("KylinMessenger");
     QApplication::setOrganizationDomain("kylinmessenger.org");
     
     qInfo() << "========================================";
     qInfo() << "麒麟信使启动中...";
-    qInfo() << "版本: 1.0.0";
+    qInfo() << "版本:" << KylinMessenger::kAppVersion;
+    qInfo() << "Git标识:" << KylinMessenger::kGitDescribe;
+    qInfo() << "构建时间:" << KylinMessenger::kBuildTimestamp;
     qInfo() << "Qt版本:" << QT_VERSION_STR;
     qInfo() << "========================================";
     
     // 创建网络管理器
-    NetworkManager* network_manager = new NetworkManager();
+    auto network_manager = std::make_shared<NetworkManager>();
+    locator.registerService<NetworkManager>(network_manager);
     
     // 初始化本地用户信息
     UserInfo local_user;
@@ -99,9 +181,13 @@ int main(int argc, char* argv[])
     }
     
     qInfo() << "网络管理器初始化成功";
-    
+
+    auto message_repository = std::make_shared<Core::Repositories::InMemoryMessageRepository>();
+    locator.registerService<Core::Repositories::MessageRepository>(message_repository);
+
     // 创建AI服务
     std::shared_ptr<IAIService> ai_service;
+    std::shared_ptr<IComplianceService> compliance_service;
     
 #ifdef ENABLE_AI_FEATURES
     qInfo() << "初始化AI服务...";
@@ -118,6 +204,7 @@ int main(int argc, char* argv[])
     if (ai_service) {
         if (ai_service->initialize("")) {
             qInfo() << "AI服务初始化成功";
+            locator.registerService<IAIService>(ai_service);
         } else {
             qWarning() << "AI服务初始化失败";
         }
@@ -134,15 +221,69 @@ int main(int argc, char* argv[])
 #else
     qInfo() << "AI功能已禁用";
 #endif
-    
-    // 创建主窗口
-    MainWindow main_window;
-    main_window.setNetworkManager(network_manager);
-    
-    if (ai_service) {
-        main_window.setAIService(ai_service);
+
+    qInfo() << "初始化合规审查服务...";
+    qInfo() << "[main] 准备创建主窗口";
+#ifdef ENABLE_NSFW
+    {
+        const QString backend = QString::fromLocal8Bit(qgetenv("KYLIN_NSFW_BACKEND")).trimmed().toLower();
+#ifdef HAVE_RKNN_RT
+        if (backend == QStringLiteral("rknn") || backend == QStringLiteral("npu")) {
+            RknnComplianceConfig rknnConfig = RknnComplianceConfig::fromEnvironment();
+            auto rknnService = std::make_shared<RknnNsfwComplianceService>(rknnConfig);
+            if (rknnService->isAvailable()) {
+                qInfo() << "已启用 RKNN NSFW 审核，模型路径:" << rknnConfig.modelPath;
+                compliance_service = rknnService;
+            } else {
+                qWarning() << "RKNN NSFW 审核尚未就绪，尝试回退到 Python 后端";
+            }
+        }
+#else
+        if (backend == QStringLiteral("rknn") || backend == QStringLiteral("npu")) {
+            qWarning() << "当前构建未启用 RKNN 运行时，无法加载 RKNN 后端，转用 Python 审核";
+        }
+#endif
+        if (!compliance_service) {
+            NsfwComplianceConfig config = NsfwComplianceConfig::fromEnvironment();
+            auto nsfw_service = std::make_shared<NsfwComplianceService>(config);
+            if (nsfw_service->isAvailable()) {
+                qInfo() << "已启用 NSFW 审核，模型路径:" << config.modelPath;
+                compliance_service = nsfw_service;
+            } else {
+                qWarning() << "NSFW 审核不可用，降级为占位实现";
+                compliance_service = std::make_shared<ComplianceStubService>();
+            }
+        }
+    }
+#else
+    compliance_service = std::make_shared<ComplianceStubService>();
+#endif
+
+    if (compliance_service && compliance_service->isAvailable()) {
+        locator.registerService<IComplianceService>(compliance_service);
+    } else {
+        qWarning() << "合规审查服务当前不可用，所有消息将直接放行";
     }
     
+    // 创建主窗口
+    qInfo() << "[main] 开始创建 MainWindow 对象";
+    MainWindow main_window;
+    qInfo() << "[main] MainWindow 对象创建完成";
+    
+    qInfo() << "[main] 设置 NetworkManager";
+    main_window.setNetworkManager(network_manager.get());
+    qInfo() << "[main] NetworkManager 设置完成";
+    
+    if (ai_service) {
+        qInfo() << "[main] 设置 AIService";
+        main_window.setAIService(ai_service);
+    }
+    if (compliance_service) {
+        qInfo() << "[main] 设置 ComplianceService";
+        main_window.setComplianceService(compliance_service);
+    }
+    
+    qInfo() << "[main] 显示主窗口";
     main_window.show();
     
     qInfo() << "主窗口已显示";
@@ -154,14 +295,22 @@ int main(int argc, char* argv[])
     // 清理
     qInfo() << "应用程序退出，清理资源...";
     
+    Q_CLEANUP_RESOURCE(themes);
+    Q_CLEANUP_RESOURCE(emojis);
+    Q_CLEANUP_RESOURCE(icons);
+#ifdef ENABLE_NSFW
+    Q_CLEANUP_RESOURCE(scripts);
+#endif
+
     if (ai_service) {
         ai_service->shutdown();
     }
     
     network_manager->shutdown();
-    delete network_manager;
+    locator.clear();
     
     qInfo() << "再见！";
+    Core::Logging::shutdown();
     
     return result;
 }

@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format clang-tidy cmake ninja-build qtbase5-dev
+
+      - name: Check clang-format
+        run: |
+          FILES=$(git ls-files '*.cpp' '*.h' '*.hpp' '*.cc' '*.cxx' '*.hh')
+          if [ -n "$FILES" ]; then
+            clang-format --version
+            diffout=""
+            for file in $FILES; do
+              clang-format $file | diff -u $file - || diffout+="$file\n"
+            done
+            if [ -n "$diffout" ]; then
+              echo "The following files are not clang-formatted:" >&2
+              echo "$diffout" >&2
+              exit 1
+            fi
+          fi
+
+      - name: Configure
+        run: |
+          cmake -S kylin-messenger -B build -GNinja -DBUILD_TESTS=OFF
+
+      - name: Run clang-tidy
+        run: |
+          cmake --build build --target kylin-messenger-core --config Release
+          run-clang-tidy-15 || run-clang-tidy || true
+

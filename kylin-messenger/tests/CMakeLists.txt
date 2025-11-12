@@ -61,6 +61,12 @@ else()
     message(FATAL_ERROR "Neither Qt6 nor Qt5 targets are available.")
 endif()
 
+if(QT_PACKAGE_PREFIX STREQUAL "Qt6")
+    find_package(Qt6 COMPONENTS Test REQUIRED)
+else()
+    find_package(Qt5 COMPONENTS Test REQUIRED)
+endif()
+
 # 测试可执行文件
 add_executable(test_network_protocol
     test_network_protocol.cpp
@@ -96,5 +102,19 @@ endif()
 # 注册测试
 add_test(NAME NetworkProtocolTest COMMAND test_network_protocol)
 add_test(NAME AIServiceTest COMMAND test_ai_service)
+
+add_executable(test_ui_smoke
+    ui_smoke_test.cpp
+)
+
+target_link_libraries(test_ui_smoke PRIVATE
+    ${PROJECT_NAME}-core
+    ${QT_PACKAGE_PREFIX}::Core
+    ${QT_PACKAGE_PREFIX}::Gui
+    ${QT_PACKAGE_PREFIX}::Widgets
+    ${QT_PACKAGE_PREFIX}::Test
+)
+
+add_test(NAME UISmokeTest COMMAND test_ui_smoke)
 
 message(STATUS "Tests configured")

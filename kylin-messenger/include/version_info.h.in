@@ -1,0 +1,14 @@
+#pragma once
+
+#define KYLIN_MESSENGER_VERSION "@PROJECT_VERSION@"
+#define KYLIN_MESSENGER_VERSION_GIT "@PROJECT_VERSION_GIT@"
+#define KYLIN_MESSENGER_BUILD_TIMESTAMP "@PROJECT_VERSION_BUILD_TIMESTAMP@"
+
+namespace KylinMessenger {
+
+inline constexpr const char* kAppVersion = KYLIN_MESSENGER_VERSION;
+inline constexpr const char* kGitDescribe = KYLIN_MESSENGER_VERSION_GIT;
+inline constexpr const char* kBuildTimestamp = KYLIN_MESSENGER_BUILD_TIMESTAMP;
+
+} // namespace KylinMessenger
+

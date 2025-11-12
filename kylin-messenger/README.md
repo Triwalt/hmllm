@@ -178,6 +178,37 @@ sudo apt install build-essential cmake git
 # 请参考瑞芯微官方文档
 ```
 
+#### NSFW 审核依赖
+
+Kylin Messenger 默认使用开源项目 [nsfw_model](https://github.com/GantMan/nsfw_model) 提供的 Mobilenet v2 模型做本地审核。
+
+```bash
+pip install nsfw-detector
+curl -L -o models/nsfw_mobilenet2.224x224.h5 \
+  https://github.com/GantMan/nsfw_model/releases/download/1.1.0/nsfw_mobilenet2.224x224.h5
+```
+
+运行前设置以下环境变量（可写入 shell 启动脚本）：
+
+```bash
+export KYLIN_NSFW_MODEL=/absolute/path/to/nsfw_mobilenet2.224x224.h5
+export KYLIN_NSFW_PYTHON=python3              # 可选，指定Python解释器
+export KYLIN_NSFW_BACKEND=python              # 默认，可设为 rknn 预留NPU加速
+```
+
+> **许可证说明**：`nsfw_model` 项目基于 MIT 许可，请在分发或打包模型时保留其版权声明。
+
+#### RK3566 / RKNN2 准备
+
+未来将在 RK3566 平台上利用 RKNN Toolkit2 加速 NSFW 审核。当前版本已预留
+`RknnNsfwComplianceService`，需要准备：
+
+- 安装 RKNN Runtime 2.x 并将 `librknnrt.so`、`libgomp.so` 等复制到系统库路径
+- 安装 RKNN Toolkit2（Python 端）以便离线转换模型
+- 配置 `KYLIN_NSFW_BACKEND=rknn` 以切换到 RKNN 预留后端（目前仍返回“需人工复核”）
+
+后续将补充 RKNN 模型加载与推理逻辑。
+
 ### 编译项目
 
 ```bash

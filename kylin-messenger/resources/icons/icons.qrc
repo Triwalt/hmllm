@@ -1,0 +1,17 @@
+<RCC>
+  <qresource prefix="/icons">
+    <file>app_icon.svg</file>
+    <file>camera.svg</file>
+    <file>cpu.svg</file>
+    <file>file.svg</file>
+    <file>file-text.svg</file>
+    <file>message.svg</file>
+    <file>message-square.svg</file>
+    <file>smile.svg</file>
+    <file>status_online.svg</file>
+    <file>status_away.svg</file>
+    <file>status_busy.svg</file>
+    <file>status_invisible.svg</file>
+    <file>status_offline.svg</file>
+  </qresource>
+</RCC>

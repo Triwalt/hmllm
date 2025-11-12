@@ -11,3 +11,17 @@
 #    define KYLIN_QDATASTREAM_VERSION QDataStream::Qt_5_12
 #  endif
 #endif
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#  define KYLIN_SPLIT_KEEP_EMPTY Qt::KeepEmptyParts
+#  define KYLIN_SPLIT_SKIP_EMPTY Qt::SkipEmptyParts
+#else
+#  define KYLIN_SPLIT_KEEP_EMPTY QString::KeepEmptyParts
+#  define KYLIN_SPLIT_SKIP_EMPTY QString::SkipEmptyParts
+#endif
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+#  define KYLIN_QTCP_ERROR_SIGNAL &QTcpSocket::errorOccurred
+#else
+#  define KYLIN_QTCP_ERROR_SIGNAL static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error)
+#endif

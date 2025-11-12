@@ -1,0 +1,20 @@
+{
+	"BUILD_DIR" : "E:/Project/hmllm/kylin-messenger/build-win/kylin-messenger-core_autogen",
+	"CMAKE_BINARY_DIR" : "E:/Project/hmllm/kylin-messenger/build-win",
+	"CMAKE_CURRENT_BINARY_DIR" : "E:/Project/hmllm/kylin-messenger/build-win",
+	"CMAKE_CURRENT_SOURCE_DIR" : "E:/Project/hmllm/kylin-messenger",
+	"CMAKE_SOURCE_DIR" : "E:/Project/hmllm/kylin-messenger",
+	"GENERATOR" : "Ninja",
+	"INCLUDE_DIR" : "E:/Project/hmllm/kylin-messenger/build-win/kylin-messenger-core_autogen/include",
+	"INPUTS" : [ "E:/Project/hmllm/kylin-messenger/resources/scripts/nsfw_review.py" ],
+	"LOCK_FILE" : "E:/Project/hmllm/kylin-messenger/build-win/CMakeFiles/kylin-messenger-core_autogen.dir/AutoRcc_scripts_YJYEIPIQ7C_Lock.lock",
+	"MULTI_CONFIG" : false,
+	"OPTIONS" : [ "-name", "scripts" ],
+	"OUTPUT_CHECKSUM" : "YJYEIPIQ7C",
+	"OUTPUT_NAME" : "qrc_scripts.cpp",
+	"RCC_EXECUTABLE" : "D:/Qt/6.9.3/mingw_64/bin/rcc.exe",
+	"RCC_LIST_OPTIONS" : [ "--list" ],
+	"SETTINGS_FILE" : "E:/Project/hmllm/kylin-messenger/build-win/CMakeFiles/kylin-messenger-core_autogen.dir/AutoRcc_scripts_YJYEIPIQ7C_Used.txt",
+	"SOURCE" : "E:/Project/hmllm/kylin-messenger/resources/scripts/scripts.qrc",
+	"VERBOSITY" : 0
+}

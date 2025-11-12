@@ -1,0 +1,5 @@
+set(__QT_DEPLOY_TARGET_kylin-messenger-core_FILE E:/Project/hmllm/kylin-messenger/build-win/libkylin-messenger-core.a)
+set(__QT_DEPLOY_TARGET_kylin-messenger-core_TYPE STATIC_LIBRARY)
+set(__QT_DEPLOY_TARGET_kylin-messenger_FILE E:/Project/hmllm/kylin-messenger/build-win/kylin-messenger.exe)
+set(__QT_DEPLOY_TARGET_kylin-messenger_TYPE EXECUTABLE)
+set(__QT_DEPLOY_TARGET_kylin-messenger_RUNTIME_DLLS D:/Qt/6.9.3/mingw_64/bin/Qt6Widgets.dll;D:/Qt/6.9.3/mingw_64/bin/Qt6Network.dll;D:/Qt/6.9.3/mingw_64/bin/Qt6Gui.dll;D:/Qt/6.9.3/mingw_64/bin/Qt6Core.dll)

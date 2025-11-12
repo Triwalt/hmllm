@@ -1,0 +1,24 @@
+{
+	"BUILD_DIR" : "E:/Project/hmllm/kylin-messenger/build-win/kylin-messenger-core_autogen",
+	"CMAKE_BINARY_DIR" : "E:/Project/hmllm/kylin-messenger/build-win",
+	"CMAKE_CURRENT_BINARY_DIR" : "E:/Project/hmllm/kylin-messenger/build-win",
+	"CMAKE_CURRENT_SOURCE_DIR" : "E:/Project/hmllm/kylin-messenger",
+	"CMAKE_SOURCE_DIR" : "E:/Project/hmllm/kylin-messenger",
+	"GENERATOR" : "Ninja",
+	"INCLUDE_DIR" : "E:/Project/hmllm/kylin-messenger/build-win/kylin-messenger-core_autogen/include",
+	"INPUTS" : 
+	[
+		"E:/Project/hmllm/kylin-messenger/resources/qss/dark.qss",
+		"E:/Project/hmllm/kylin-messenger/resources/qss/light.qss"
+	],
+	"LOCK_FILE" : "E:/Project/hmllm/kylin-messenger/build-win/CMakeFiles/kylin-messenger-core_autogen.dir/AutoRcc_themes_CYBNVYTVZ6_Lock.lock",
+	"MULTI_CONFIG" : false,
+	"OPTIONS" : [ "-name", "themes" ],
+	"OUTPUT_CHECKSUM" : "CYBNVYTVZ6",
+	"OUTPUT_NAME" : "qrc_themes.cpp",
+	"RCC_EXECUTABLE" : "D:/Qt/6.9.3/mingw_64/bin/rcc.exe",
+	"RCC_LIST_OPTIONS" : [ "--list" ],
+	"SETTINGS_FILE" : "E:/Project/hmllm/kylin-messenger/build-win/CMakeFiles/kylin-messenger-core_autogen.dir/AutoRcc_themes_CYBNVYTVZ6_Used.txt",
+	"SOURCE" : "E:/Project/hmllm/kylin-messenger/resources/qss/themes.qrc",
+	"VERBOSITY" : 0
+}

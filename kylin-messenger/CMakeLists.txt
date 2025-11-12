@@ -1,6 +1,24 @@
+if(ENABLE_PROTOBUF)
+    find_package(Protobuf QUIET)
+    if(Protobuf_FOUND)
+        message(STATUS "Found Protobuf ${Protobuf_VERSION}")
+        set(HAVE_PROTOBUF TRUE)
+    else()
+        message(WARNING "Protobuf not found – protocol buffer features disabled")
+        set(HAVE_PROTOBUF FALSE)
+    endif()
+endif()
 cmake_minimum_required(VERSION 3.16)
 
-project(kylin-messenger VERSION 1.0.0 LANGUAGES CXX)
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" _project_version_raw)
+string(STRIP "${_project_version_raw}" _project_version_stripped)
+set(_project_version_regex "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+if(NOT _project_version_stripped MATCHES ${_project_version_regex})
+    message(WARNING "VERSION 文件格式非法，使用 0.0.0 作为默认版本号")
+    set(_project_version_stripped "0.0.0")
+endif()
+
+project(kylin-messenger VERSION ${_project_version_stripped} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -12,34 +30,94 @@ set(CMAKE_AUTOUIC ON)
 option(ENABLE_AI_FEATURES "Enable AI features" ON)
 option(BUILD_TESTS "Build unit tests" ON)
 option(BUILD_DOCS "Build API documentation" OFF)
+option(ENABLE_NSFW "Enable NSFW compliance service" OFF)
+option(ENABLE_PROTOBUF "Enable Protocol Buffers integration" ON)
 
 # 查找Qt：优先 Qt6，若不可用则回退 Qt5（便于 Ubuntu 20.04 开发调试）
 set(QT_REQUIRED_COMPONENTS Core Widgets Network Gui)
+set(HAVE_QT_WEBSOCKETS FALSE)
+
 find_package(Qt6 COMPONENTS ${QT_REQUIRED_COMPONENTS})
 if(Qt6_FOUND)
     message(STATUS "Using Qt6: ${Qt6_VERSION}")
     set(QT_PACKAGE_PREFIX Qt6)
+    set(PROJECT_QT_VERSION ${Qt6_VERSION})
+    find_package(Qt6 COMPONENTS WebSockets QUIET)
+    if(Qt6WebSockets_FOUND)
+        set(HAVE_QT_WEBSOCKETS TRUE)
+        message(STATUS "Qt6 WebSockets module available")
+    else()
+        message(WARNING "Qt6 WebSockets 模块不可用，跨网关功能将被禁用")
+    endif()
 else()
     find_package(Qt5 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
     message(WARNING "Qt6 not found. Falling back to Qt5: ${Qt5Core_VERSION}")
     set(QT_PACKAGE_PREFIX Qt5)
+    set(PROJECT_QT_VERSION ${Qt5Core_VERSION})
+    find_package(Qt5 COMPONENTS WebSockets QUIET)
+    if(Qt5WebSockets_FOUND)
+        set(HAVE_QT_WEBSOCKETS TRUE)
+        message(STATUS "Qt5 WebSockets module available")
+    else()
+        message(WARNING "Qt WebSockets 模块不可用，跨网关功能将被禁用")
+    endif()
 endif()
 
 # 查找ZLIB (用于CRC32校验)
 find_package(ZLIB REQUIRED)
 
+
+find_package(Git QUIET)
+set(PROJECT_VERSION_GIT ${PROJECT_VERSION})
+if(GIT_FOUND)
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} describe --tags --dirty --always
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE _git_describe
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    if(_git_describe)
+        set(PROJECT_VERSION_GIT ${_git_describe})
+    endif()
+endif()
+
+string(TIMESTAMP PROJECT_VERSION_BUILD_TIMESTAMP "%Y-%m-%d %H:%M:%S")
+set(VERSION_HEADER_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+file(MAKE_DIRECTORY ${VERSION_HEADER_DIR})
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/version_info.h.in
+    ${VERSION_HEADER_DIR}/version_info.h
+    @ONLY
+)
+
 # 公共源文件
 set(CORE_SOURCES
-    src/main_window.cpp
-    src/chat_window.cpp
-    src/network_protocol.cpp
-    src/network_manager.cpp
+    src/core/models.cpp
+    src/core/logging.cpp
+    src/core/di/service_locator.cpp
+    src/core/repositories/in_memory_message_repository.cpp
+    src/core/repositories/contact_repository.cpp
+    src/network/network_manager.cpp
+    src/network/ipmsg.cpp
+    src/services/compliance_stub_service.cpp
     src/ai_echo_service.cpp
     src/ai_service_factory.cpp
+    src/ui/chat_window.cpp
+    src/ui/main_window.cpp
+    src/ui/user_list_page.cpp
+    src/ui/contact_list_page.cpp
+    src/ui/group_list_page.cpp
+    resources/icons/icons.qrc
+    resources/emojis/emojis.qrc
+    resources/qss/themes.qrc
 )
 
 # 头文件
 set(HEADERS
+    include/core/models.h
+    include/core/logging.h
+    include/core/di/service_locator.h
     include/main_window.h
     include/chat_window.h
     include/network_protocol.h
@@ -47,7 +125,22 @@ set(HEADERS
     include/ai_service.h
     include/ai_echo_service.h
     include/ai_service_factory.h
+    include/compliance_service.h
+    include/compliance_stub_service.h
+    include/nsfw_compliance_service.h
+    include/rknn_nsfw_compliance_service.h
+    include/network/constants.h
+    include/core/repositories/message_repository.h
+    include/core/repositories/contact_repository.h
+    include/ui/user_list_page.h
+    include/ui/contact_list_page.h
+    include/ui/group_list_page.h
 )
+
+if(HAVE_QT_WEBSOCKETS)
+    list(APPEND CORE_SOURCES src/network/gateway_client.cpp)
+    list(APPEND HEADERS include/network/gateway_client.h)
+endif()
 
 # 共享核心库（供可执行文件与单元测试复用）
 add_library(${PROJECT_NAME}-core
@@ -58,6 +151,9 @@ add_library(${PROJECT_NAME}-core
 target_include_directories(${PROJECT_NAME}-core
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${VERSION_HEADER_DIR}
+    PRIVATE
+        ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 target_link_libraries(${PROJECT_NAME}-core
@@ -68,6 +164,23 @@ target_link_libraries(${PROJECT_NAME}-core
     ${QT_PACKAGE_PREFIX}::Gui
     ZLIB::ZLIB
 )
+
+if(HAVE_QT_WEBSOCKETS)
+    target_link_libraries(${PROJECT_NAME}-core PUBLIC ${QT_PACKAGE_PREFIX}::WebSockets)
+    target_compile_definitions(${PROJECT_NAME}-core PUBLIC HAVE_QT_WEBSOCKETS)
+endif()
+
+if(HAVE_PROTOBUF)
+    file(GLOB KYLIN_PROTO_FILES "${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto")
+    if(KYLIN_PROTO_FILES)
+        protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${KYLIN_PROTO_FILES})
+        target_sources(${PROJECT_NAME}-core PRIVATE ${PROTO_SRCS} ${PROTO_HDRS})
+        target_include_directories(${PROJECT_NAME}-core PRIVATE ${Protobuf_INCLUDE_DIRS})
+        target_link_libraries(${PROJECT_NAME}-core PRIVATE ${Protobuf_LIBRARIES})
+        target_compile_definitions(${PROJECT_NAME}-core PRIVATE HAVE_PROTOBUF)
+        install(FILES ${KYLIN_PROTO_FILES} DESTINATION share/${PROJECT_NAME}/proto)
+    endif()
+endif()
 
 # AI功能
 if(ENABLE_AI_FEATURES)
@@ -85,26 +198,48 @@ if(ENABLE_AI_FEATURES)
         endif()
     endif()
 
-    if(_kylin_enable_rknn_search)
-        # 可选: 查找RKNN运行时
-        find_library(RKNN_RT_LIB rknnrt HINTS /usr/lib)
-        if(RKNN_RT_LIB)
-            message(STATUS "找到RKNN运行时: ${RKNN_RT_LIB}")
-            target_link_libraries(${PROJECT_NAME}-core PRIVATE ${RKNN_RT_LIB})
-            target_compile_definitions(${PROJECT_NAME}-core PRIVATE HAVE_RKNN_RT)
-        else()
-            message(WARNING "未找到RKNN运行时库，AI功能可能受限")
+    if(ENABLE_NSFW)
+        # 仅在启用 NSFW 时选择一种合规实现进行编译
+        set(_kylin_use_rknn_impl FALSE)
+        if(_kylin_enable_rknn_search)
+            # 可选: 查找RKNN运行时
+            find_library(RKNN_RT_LIB rknnrt HINTS /usr/lib)
+            if(RKNN_RT_LIB)
+                message(STATUS "找到RKNN运行时: ${RKNN_RT_LIB}")
+                target_link_libraries(${PROJECT_NAME}-core PRIVATE ${RKNN_RT_LIB})
+                target_compile_definitions(${PROJECT_NAME}-core PRIVATE HAVE_RKNN_RT)
+                set(_kylin_use_rknn_impl TRUE)
+            else()
+                message(WARNING "未找到RKNN运行时库，AI功能可能受限")
+            endif()
+
+            # 可选: 查找libllm-rknn
+            find_library(LLM_RKNN_LIB llm-rknn HINTS /usr/lib /usr/local/lib)
+            if(LLM_RKNN_LIB)
+                message(STATUS "找到libllm-rknn: ${LLM_RKNN_LIB}")
+                target_link_libraries(${PROJECT_NAME}-core PRIVATE ${LLM_RKNN_LIB})
+                target_compile_definitions(${PROJECT_NAME}-core PRIVATE HAVE_LLM_RKNN)
+                set(_kylin_use_rknn_impl TRUE)
+            else()
+                message(WARNING "未找到libllm-rknn，LLM功能将不可用")
+            endif()
         endif()
 
-        # 可选: 查找libllm-rknn
-        find_library(LLM_RKNN_LIB llm-rknn HINTS /usr/lib /usr/local/lib)
-        if(LLM_RKNN_LIB)
-            message(STATUS "找到libllm-rknn: ${LLM_RKNN_LIB}")
-            target_link_libraries(${PROJECT_NAME}-core PRIVATE ${LLM_RKNN_LIB})
-            target_compile_definitions(${PROJECT_NAME}-core PRIVATE HAVE_LLM_RKNN)
+        if(_kylin_use_rknn_impl)
+            target_sources(${PROJECT_NAME}-core PRIVATE
+                src/services/rknn_nsfw_compliance_service.cpp
+            )
+            message(STATUS "启用 RKNN NSFW 合规实现")
         else()
-            message(WARNING "未找到libllm-rknn，LLM功能将不可用")
+            # 默认启用 Python/外部进程版 NSFW 实现
+            target_sources(${PROJECT_NAME}-core PRIVATE
+                src/services/nsfw_compliance_service.cpp
+                resources/scripts/scripts.qrc
+            )
+            message(STATUS "启用 Python NSFW 合规实现")
         endif()
+    else()
+        message(STATUS "NSFW 合规服务已禁用（使用占位合规实现）")
     endif()
 endif()
 
@@ -116,9 +251,15 @@ else()
 endif()
 
 # 应用程序目标
-add_executable(${PROJECT_NAME}
-    src/main.cpp
-)
+if(WIN32)
+    add_executable(${PROJECT_NAME} WIN32
+        src/main.cpp
+    )
+else()
+    add_executable(${PROJECT_NAME}
+        src/main.cpp
+    )
+endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     ${PROJECT_NAME}-core
@@ -187,9 +328,11 @@ endif()
 message(STATUS "")
 message(STATUS "========== 配置摘要 ==========")
 message(STATUS "项目: ${PROJECT_NAME} v${PROJECT_VERSION}")
+message(STATUS "Git描述: ${PROJECT_VERSION_GIT}")
+message(STATUS "构建时间: ${PROJECT_VERSION_BUILD_TIMESTAMP}")
 message(STATUS "构建类型: ${CMAKE_BUILD_TYPE}")
 message(STATUS "C++标准: C++${CMAKE_CXX_STANDARD}")
-message(STATUS "Qt版本: ${Qt6_VERSION}")
+message(STATUS "Qt版本: ${PROJECT_QT_VERSION}")
 message(STATUS "AI功能: ${ENABLE_AI_FEATURES}")
 message(STATUS "构建测试: ${BUILD_TESTS}")
 message(STATUS "构建文档: ${BUILD_DOCS}")

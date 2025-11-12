@@ -1,0 +1,35 @@
+{
+	"BUILD_DIR" : "E:/Project/hmllm/kylin-messenger/build-win/kylin-messenger-core_autogen",
+	"CMAKE_BINARY_DIR" : "E:/Project/hmllm/kylin-messenger/build-win",
+	"CMAKE_CURRENT_BINARY_DIR" : "E:/Project/hmllm/kylin-messenger/build-win",
+	"CMAKE_CURRENT_SOURCE_DIR" : "E:/Project/hmllm/kylin-messenger",
+	"CMAKE_SOURCE_DIR" : "E:/Project/hmllm/kylin-messenger",
+	"GENERATOR" : "Ninja",
+	"INCLUDE_DIR" : "E:/Project/hmllm/kylin-messenger/build-win/kylin-messenger-core_autogen/include",
+	"INPUTS" : 
+	[
+		"E:/Project/hmllm/kylin-messenger/resources/icons/file.svg",
+		"E:/Project/hmllm/kylin-messenger/resources/icons/message-square.svg",
+		"E:/Project/hmllm/kylin-messenger/resources/icons/status_invisible.svg",
+		"E:/Project/hmllm/kylin-messenger/resources/icons/status_online.svg",
+		"E:/Project/hmllm/kylin-messenger/resources/icons/status_away.svg",
+		"E:/Project/hmllm/kylin-messenger/resources/icons/camera.svg",
+		"E:/Project/hmllm/kylin-messenger/resources/icons/file-text.svg",
+		"E:/Project/hmllm/kylin-messenger/resources/icons/app_icon.svg",
+		"E:/Project/hmllm/kylin-messenger/resources/icons/smile.svg",
+		"E:/Project/hmllm/kylin-messenger/resources/icons/status_busy.svg",
+		"E:/Project/hmllm/kylin-messenger/resources/icons/message.svg",
+		"E:/Project/hmllm/kylin-messenger/resources/icons/status_offline.svg",
+		"E:/Project/hmllm/kylin-messenger/resources/icons/cpu.svg"
+	],
+	"LOCK_FILE" : "E:/Project/hmllm/kylin-messenger/build-win/CMakeFiles/kylin-messenger-core_autogen.dir/AutoRcc_icons_F5S6UDLBXB_Lock.lock",
+	"MULTI_CONFIG" : false,
+	"OPTIONS" : [ "-name", "icons" ],
+	"OUTPUT_CHECKSUM" : "F5S6UDLBXB",
+	"OUTPUT_NAME" : "qrc_icons.cpp",
+	"RCC_EXECUTABLE" : "D:/Qt/6.9.3/mingw_64/bin/rcc.exe",
+	"RCC_LIST_OPTIONS" : [ "--list" ],
+	"SETTINGS_FILE" : "E:/Project/hmllm/kylin-messenger/build-win/CMakeFiles/kylin-messenger-core_autogen.dir/AutoRcc_icons_F5S6UDLBXB_Used.txt",
+	"SOURCE" : "E:/Project/hmllm/kylin-messenger/resources/icons/icons.qrc",
+	"VERBOSITY" : 0
+}

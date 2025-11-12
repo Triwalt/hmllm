@@ -1,0 +1,24 @@
+BasedOnStyle: Google
+IndentWidth: 4
+ColumnLimit: 100
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+BreakBeforeBraces: Linux
+DerivePointerAlignment: false
+PointerAlignment: Left
+SortIncludes: true
+IncludeBlocks: Regroup
+UseTab: Never
+SpaceAfterTemplateKeyword: false
+Standard: Cpp17
+NamespaceIndentation: All
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignEscapedNewlines: Right
+AllowAllArgumentsOnNextLine: false
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+PenaltyExcessCharacter: 50
+

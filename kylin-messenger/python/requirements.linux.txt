@@ -1,0 +1,9 @@
+pip>=23
+wheel
+setuptools
+numpy<2
+tensorflow==2.11.*
+nsfw-detector
+Pillow>=9
+
+

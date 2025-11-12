@@ -1,9 +1,15 @@
 // test_network_protocol.cpp - 网络协议单元测试
 #include <gtest/gtest.h>
-#include "../include/network_protocol.h"
-#include <QDebug>
 
-using namespace KylinMessenger;
+#include "core/models.h"
+#include "network/protocol.h"
+
+using KylinMessenger::Core::ChatMessage;
+using KylinMessenger::Core::FileAttachment;
+using KylinMessenger::Core::MessageContentType;
+using KylinMessenger::Core::UserInfo;
+using KylinMessenger::Core::UserStatus;
+using namespace KylinMessenger::Network;
 
 class NetworkProtocolTest : public ::testing::Test {
 protected:
@@ -49,6 +55,16 @@ TEST_F(NetworkProtocolTest, ChatMessageSerialization) {
     msg.content = "Hello, this is a test message!";
     msg.timestamp = QDateTime::currentDateTime();
     msg.is_read = false;
+
+    FileAttachment attachment;
+    attachment.filename = "report.pdf";
+    attachment.filepath = "/tmp/report.pdf";
+    attachment.filesize = 4096;
+    attachment.file_hash = "deadbeef";
+    msg.attachments.append(attachment);
+
+    msg.metadata.insert("reply_to", "none");
+    msg.metadata.insert("client", "unit-test");
     
     // 序列化
     QByteArray data = msg.serialize();
@@ -65,6 +81,10 @@ TEST_F(NetworkProtocolTest, ChatMessageSerialization) {
     EXPECT_EQ(msg.message_type, msg2.message_type);
     EXPECT_EQ(msg.content, msg2.content);
     EXPECT_EQ(msg.is_read, msg2.is_read);
+    ASSERT_EQ(msg.attachments.size(), msg2.attachments.size());
+    EXPECT_EQ(msg.attachments.first().filename, msg2.attachments.first().filename);
+    EXPECT_EQ(msg.attachments.first().filesize, msg2.attachments.first().filesize);
+    EXPECT_EQ(msg.metadata, msg2.metadata);
 }
 
 TEST_F(NetworkProtocolTest, PacketHeaderValidation) {
@@ -106,7 +126,7 @@ TEST_F(NetworkProtocolTest, NetworkPacketRoundTrip) {
     NetworkPacket packet = NetworkPacket::createChatMessagePacket(original_msg);
     
     EXPECT_TRUE(packet.isValid());
-    EXPECT_EQ(packet.getHeader().message_type, MessageType::ChatMessage);
+    EXPECT_EQ(packet.header().message_type, MessageType::ChatMessage);
     
     // 序列化
     QByteArray data = packet.serialize();
@@ -119,7 +139,7 @@ TEST_F(NetworkProtocolTest, NetworkPacketRoundTrip) {
     
     // 验证消息内容
     ChatMessage received_msg;
-    ASSERT_TRUE(received_msg.deserialize(packet2.getPayload()));
+    ASSERT_TRUE(received_msg.deserialize(packet2.payload()));
     EXPECT_EQ(original_msg.message_id, received_msg.message_id);
     EXPECT_EQ(original_msg.content, received_msg.content);
 }

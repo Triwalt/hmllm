@@ -1,0 +1,157 @@
+QWidget {
+  background-color: #F5F7FB;
+  color: #1F2430;
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+}
+
+QMainWindow {
+  background-color: #EEF1F8;
+}
+
+QToolBar {
+  background: #FFFFFF;
+  border: none;
+  border-bottom: 1px solid #E0E6F3;
+  spacing: 8px;
+  padding: 6px 10px;
+}
+
+QToolBar QToolButton {
+  background: transparent;
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+QToolBar QToolButton:hover {
+  background: rgba(51, 102, 255, 0.08);
+}
+
+QToolBar QToolButton:pressed {
+  background: rgba(51, 102, 255, 0.16);
+}
+
+QLineEdit, QTextEdit, QTextBrowser {
+  background: #FFFFFF;
+  border: 1px solid #CAD5EA;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+QLineEdit:focus, QTextEdit:focus, QTextBrowser:focus {
+  border: 1px solid #3366FF;
+  box-shadow: 0 0 0 3px rgba(51, 102, 255, 0.2);
+}
+
+QPushButton {
+  background: #3366FF;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-weight: 600;
+}
+
+QPushButton:hover {
+  background: #234BDD;
+}
+
+QPushButton:pressed {
+  background: #1A3BB3;
+}
+
+QPushButton:disabled {
+  background: #A5B4E3;
+  color: #E8EBF7;
+}
+
+QComboBox {
+  background: #FFFFFF;
+  border: 1px solid #CAD5EA;
+  border-radius: 8px;
+  padding: 6px 12px;
+}
+
+QListWidget {
+  background: #FFFFFF;
+  border: 1px solid #E0E6F3;
+  border-radius: 12px;
+  padding: 6px;
+}
+
+QListWidget::item {
+  padding: 10px;
+  border-radius: 8px;
+}
+
+QListWidget::item:selected {
+  background: rgba(51, 102, 255, 0.12);
+  color: #1F2430;
+}
+
+QMenuBar {
+  background: #FFFFFF;
+  border: none;
+  padding: 6px 12px;
+}
+
+QMenuBar::item {
+  background: transparent;
+  padding: 4px 12px;
+  border-radius: 6px;
+}
+
+QMenuBar::item:selected {
+  background: rgba(51, 102, 255, 0.12);
+}
+
+QMenu {
+  background: #FFFFFF;
+  border: 1px solid #D3DBEB;
+  border-radius: 10px;
+  padding: 6px 0;
+}
+
+QMenu::item {
+  padding: 8px 18px;
+  border-radius: 6px;
+}
+
+QMenu::item:selected {
+  background: rgba(51, 102, 255, 0.12);
+}
+
+QStatusBar {
+  background: #FFFFFF;
+  border-top: 1px solid #E0E6F3;
+  padding: 4px 12px;
+}
+
+QScrollBar:vertical {
+  background: transparent;
+  width: 10px;
+  margin: 4px;
+}
+
+QScrollBar::handle:vertical {
+  background: rgba(31, 36, 48, 0.15);
+  border-radius: 5px;
+}
+
+QScrollBar::handle:vertical:hover {
+  background: rgba(31, 36, 48, 0.25);
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+  height: 0;
+}
+
+QDialog {
+  background: #FFFFFF;
+  border-radius: 12px;
+}
+
+QDialogButtonBox QPushButton {
+  min-width: 90px;
+}

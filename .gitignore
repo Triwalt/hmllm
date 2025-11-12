@@ -35,6 +35,7 @@ cmake-build-*/
 # IDEs
 .vscode/
 .idea/
+.claude/
 
 # OS
 .DS_Store

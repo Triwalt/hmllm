@@ -12,10 +12,19 @@
 #include <QToolBar>
 #include <QStatusBar>
 #include <QMenuBar>
+#include <QAction>
 #include <memory>
+#include <QStackedWidget>
+#include <QIcon>
 
 #include "network_manager.h"
 #include "ai_service.h"
+#include "compliance_service.h"
+#include "core/repositories/message_repository.h"
+#include "core/repositories/contact_repository.h"
+#include "ui/user_list_page.h"
+#include "ui/contact_list_page.h"
+#include "ui/group_list_page.h"
 
 namespace KylinMessenger {
 
@@ -50,23 +59,26 @@ public:
      * @param ai_service AI服务实例
      */
     void setAIService(std::shared_ptr<IAIService> ai_service);
+
+    void setComplianceService(std::shared_ptr<IComplianceService> compliance_service);
     
 protected:
     void closeEvent(QCloseEvent* event) override;
     
 private slots:
     // 网络事件处理
-    void onUserOnline(const UserInfo& user_info);
+    void onUserOnline(const Core::UserInfo& user_info);
     void onUserOffline(const QString& user_id);
-    void onUserInfoUpdated(const UserInfo& user_info);
-    void onMessageReceived(const ChatMessage& message);
+    void onUserInfoUpdated(const Core::UserInfo& user_info);
+    void onMessageReceived(const Core::ChatMessage& message);
+    void onGroupMessageReceived(const QString& group_id, const Core::ChatMessage& message);
     
     // UI事件处理
-    void onUserItemDoubleClicked(QListWidgetItem* item);
-    void onUserItemContextMenu(const QPoint& pos);
+    void onViewUserInfo();
     void onSearchTextChanged(const QString& text);
     void onStatusChanged(int index);
     void onStatusTextChanged(const QString& text);
+    void showUserContextMenu(const QPoint& pos, const Core::UserInfo& user_info);
     
     // 菜单动作
     void onSendMessage();
@@ -93,32 +105,53 @@ private:
     void saveSettings();
     
     void updateUserList();
-    void updateUserListItem(const UserInfo& user_info);
+    void updateUserListItem(const Core::UserInfo& user_info);
     void removeUserListItem(const QString& user_id);
     void ensureLoopbackEntry();
     void incrementUnread(const QString& user_id);
     void markConversationRead(const QString& user_id);
+    QString conversationKey(const QString& user_id) const;
+    QString userDisplayName(const Core::UserInfo& user_info) const;
+    void showUserInfoDialog(const Core::UserInfo& user_info,
+                            const QMap<QString, QString>& details);
     
-    ChatWindow* openChatWindow(const UserInfo& user_info, bool activate = true);
+    ChatWindow* openChatWindow(const Core::UserInfo& user_info, bool activate = true);
+    ChatWindow* openGroupChatWindow(const Core::GroupInfo& group_info, bool activate = true);
     ChatWindow* findChatWindow(const QString& user_id);
     
     void showNotification(const QString& title, const QString& message);
-    
+    QIcon statusIcon(Core::UserStatus status) const;
+    QIcon actionIcon(const QString& name) const;
+    void applyTheme(const QString& theme, bool silent = false);
+    QString resolveThemePath(const QString& theme) const;
+    QString defaultImageDownloadDir() const;
+    void applyAutoDownloadConfig(ChatWindow* window) const;
+
 private:
     // 网络
     NetworkManager* m_network_manager;
-    UserInfo m_local_user;
-    UserInfo m_loopback_user;
+    Core::UserInfo m_local_user;
+    Core::UserInfo m_loopback_user;
     
     // AI服务
     std::shared_ptr<IAIService> m_ai_service;
+    std::shared_ptr<IComplianceService> m_compliance_service;
+    std::shared_ptr<Core::Repositories::MessageRepository> m_message_repository;
+    std::shared_ptr<Core::Repositories::IContactRepository> m_contact_repository;
     
-    // UI组件
-    QListWidget* m_user_list;
-    QLineEdit* m_search_edit;
+    // UI组件 - 页面管理
+    QStackedWidget* m_stacked_widget;
+    UserListPage* m_user_list_page;
+    ContactListPage* m_contact_list_page;
+    GroupListPage* m_group_list_page;
+    
+    // 状态栏组件
     QComboBox* m_status_combo;
     QLineEdit* m_status_text_edit;
     QLabel* m_user_count_label;
+    
+    // 页面切换按钮（可选：使用标签页或侧边栏）
+    QTabWidget* m_tab_widget;  // 使用标签页管理页面
     
     // 菜单
     QMenu* m_file_menu;
@@ -135,11 +168,22 @@ private:
     // 聊天窗口管理
     QMap<QString, ChatWindow*> m_chat_windows;
     QHash<QString, int> m_unread_counts;
-    QHash<QString, UserInfo> m_cached_users;
-    
+    QHash<QString, Core::UserInfo> m_cached_users;
+    QMap<QString, QString> m_local_feiq_details;
+ 
     // 右键菜单
     QMenu* m_user_context_menu;
     QListWidgetItem* m_current_context_item;
+    QAction* m_view_info_action;
+    
+    // 页面切换槽函数
+    void onPageChanged(int index);
+
+    // 主题
+    QString m_current_theme;
+
+    bool m_auto_download_images = true;
+    QString m_auto_image_download_dir;
 };
 
 } // namespace KylinMessenger

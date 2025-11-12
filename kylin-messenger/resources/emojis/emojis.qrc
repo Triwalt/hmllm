@@ -1,0 +1,22 @@
+<RCC>
+  <qresource prefix="/emojis/google">
+    <file>grinning.svg</file>
+    <file>beaming.svg</file>
+    <file>joy.svg</file>
+    <file>rofl.svg</file>
+    <file>smiling.svg</file>
+    <file>heart_eyes.svg</file>
+    <file>kissing_heart.svg</file>
+    <file>sunglasses.svg</file>
+    <file>crying.svg</file>
+    <file>sob.svg</file>
+    <file>angry.svg</file>
+    <file>thumbs_up.svg</file>
+    <file>pray.svg</file>
+    <file>party.svg</file>
+    <file>heart.svg</file>
+    <file>fire.svg</file>
+    <file>sparkles.svg</file>
+    <file>smiling_hearts.svg</file>
+  </qresource>
+</RCC>

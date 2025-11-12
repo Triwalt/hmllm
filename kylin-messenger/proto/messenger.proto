@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package kylin.messenger.v1;
+
+message UserPresence {
+  string user_id = 1;
+  string username = 2;
+  string hostname = 3;
+  string ip_address = 4;
+  uint32 port = 5;
+  enum Status {
+    STATUS_UNKNOWN = 0;
+    STATUS_OFFLINE = 1;
+    STATUS_ONLINE = 2;
+    STATUS_AWAY = 3;
+    STATUS_BUSY = 4;
+    STATUS_INVISIBLE = 5;
+  }
+  Status status = 6;
+  string status_text = 7;
+  string avatar_hash = 8;
+  string group_name = 9;
+}
+
+message ChatMessage {
+  string message_id = 1;
+  string sender_id = 2;
+  string receiver_id = 3;
+  string group_id = 4;
+  enum ContentType {
+    CONTENT_TYPE_UNKNOWN = 0;
+    CONTENT_TYPE_TEXT = 1;
+    CONTENT_TYPE_IMAGE = 2;
+    CONTENT_TYPE_FILE = 3;
+    CONTENT_TYPE_EMOJI = 4;
+    CONTENT_TYPE_SYSTEM = 5;
+  }
+  ContentType content_type = 5;
+  string content = 6;
+  int64 timestamp_ms = 7;
+  bool is_read = 8;
+
+  message Attachment {
+    string filename = 1;
+    uint64 filesize = 2;
+    string file_hash = 3;
+  }
+  repeated Attachment attachments = 9;
+
+  map<string, string> metadata = 10;
+}
+
+message NetworkEnvelope {
+  oneof payload {
+    UserPresence presence = 1;
+    ChatMessage chat = 2;
+    bytes raw_payload = 15;
+  }
+}
+
