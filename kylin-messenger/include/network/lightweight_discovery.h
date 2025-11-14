@@ -40,27 +40,27 @@ public:
     /**
      * @brief 获取在线用户列表
      */
-    QList<UserInfo> getOnlineUsers() const;
+    QList<Core::UserInfo> getOnlineUsers() const;
 
     /**
      * @brief 获取特定用户信息
      */
-    std::optional<UserInfo> getUser(const QString& userId) const;
+    std::optional<Core::UserInfo> getUser(const QString& userId) const;
 
     /**
      * @brief 更新本地用户信息
      */
-    void updateLocalUser(const UserInfo& user);
+    void updateLocalUser(const Core::UserInfo& user);
 
     /**
      * @brief 注册回环测试用户
      */
-    void registerLoopbackPeer(const UserInfo& user);
+    void registerLoopbackPeer(const Core::UserInfo& user);
 
 signals:
-    void userOnline(const UserInfo& user);
+    void userOnline(const Core::UserInfo& user);
     void userOffline(const QString& userId);
-    void userInfoUpdated(const UserInfo& user);
+    void userInfoUpdated(const Core::UserInfo& user);
     void networkError(const QString& error);
 
 private slots:
@@ -71,7 +71,7 @@ private slots:
 
 private:
     struct UserEntry {
-        UserInfo info;
+        Core::UserInfo info;
         QDateTime lastSeen;
         QHostAddress address;
         quint16 port;
@@ -79,7 +79,7 @@ private:
     };
 
     bool available_ = false;
-    UserInfo localUser_;
+    Core::UserInfo localUser_;
     QUdpSocket* udpSocket_ = nullptr;
     
     // 智能心跳相关

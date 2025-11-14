@@ -103,6 +103,7 @@ signals:
                             const QString& reason);
     void typingIndicator(const QString& userId, bool isTyping);
     void messageRead(const QString& messageId);
+    void groupMembersUpdated(const QString& groupId, const QList<Core::UserInfo>& members);
     void networkError(const QString& error);
     
 private slots:
@@ -174,7 +175,9 @@ private:
     QList<IncomingFileOffer> handleFileAttachments(const QString& senderId,
                                                   const QHostAddress& senderAddress,
                                                   quint32 packetNo,
+                                                  quint32 senderPort,
                                                   const QString& attachmentsPart);
+    QList<Core::UserInfo> getGroupMembers(const QString& group_id) const;
     bool sendGetFileData(const QHostAddress& target,
                          quint32 packetNo,
                          quint32 fileId,
@@ -262,6 +265,8 @@ private:
     QHash<QTcpSocket*, ActiveSendTransfer> m_active_send_transfers;
     QHash<QTcpSocket*, ActiveReceiveTransfer> m_active_receive_transfers;
     quint32 m_file_id_seed = 0;
+
+    QHash<QString, QSet<QString>> m_group_members;
 
     QSet<QString> m_loopback_peer_ids;
     QSet<QString> m_loopback_addresses;

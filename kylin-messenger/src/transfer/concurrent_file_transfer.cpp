@@ -248,6 +248,51 @@ void ConcurrentFileTransfer::processTransferQueue() {
     }
 }
 
+void ConcurrentFileTransfer::handleNewConnection() {
+    // 处理新的套接字连接 - 简化实现
+    qDebug() << "[ConcurrentFileTransfer] 新连接请求";
+}
+
+void ConcurrentFileTransfer::handleSocketReadyRead() {
+    // 处理套接字读取就绪事件 - 简化实现
+    qDebug() << "[ConcurrentFileTransfer] 套接字读就绪";
+}
+
+void ConcurrentFileTransfer::handleSocketDisconnected() {
+    // 处理套接字断开连接事件 - 简化实现
+    qDebug() << "[ConcurrentFileTransfer] 套接字断开";
+}
+
+void ConcurrentFileTransfer::handleSocketError(QAbstractSocket::SocketError error) {
+    // 处理套接字错误 - 简化实现
+    QString errorName;
+    switch (error) {
+        case QAbstractSocket::SocketError::ConnectionRefusedError:
+            errorName = "连接被拒绝";
+            break;
+        case QAbstractSocket::SocketError::RemoteHostClosedError:
+            errorName = "远程主机关闭连接";
+            break;
+        case QAbstractSocket::SocketError::HostNotFoundError:
+            errorName = "主机未找到";
+            break;
+        case QAbstractSocket::SocketError::SocketAccessError:
+            errorName = "套接字访问错误";
+            break;
+        case QAbstractSocket::SocketError::SocketResourceError:
+            errorName = "套接字资源错误";
+            break;
+        case QAbstractSocket::SocketError::NetworkError:
+            errorName = "网络错误";
+            break;
+        case QAbstractSocket::SocketError::UnknownSocketError:
+        default:
+            errorName = "未知套接字错误";
+            break;
+    }
+    qDebug() << "[ConcurrentFileTransfer] 套接字错误:" << errorName << static_cast<int>(error);
+}
+
 void ConcurrentFileTransfer::cleanupCompletedTasks() {
     std::lock_guard<std::mutex> lock(transfersMutex_);
     auto it = transfers_.begin();

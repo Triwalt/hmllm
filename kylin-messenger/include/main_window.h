@@ -85,6 +85,14 @@ public:
      * @param transfer 并发文件传输服务
      */
     void setConcurrentFileTransfer(std::shared_ptr<Transfer::ConcurrentFileTransfer> transfer);
+
+#ifdef ENABLE_AI_FEATURES
+    /**
+     * @brief 设置NSFW检测器
+     * @param detector NSFW检测器
+     */
+    void setNSFWDetector(std::shared_ptr<AI::LightweightNSFWDetector> detector);
+#endif
     
 protected:
     void closeEvent(QCloseEvent* event) override;
@@ -105,6 +113,7 @@ private slots:
     
     // UI事件处理
     void onViewUserInfo();
+    void onAddContactFromContext();
     void onSearchTextChanged(const QString& text);
     void onStatusChanged(int index);
     void onStatusTextChanged(const QString& text);
@@ -144,11 +153,12 @@ private:
     QString userDisplayName(const Core::UserInfo& user_info) const;
     void showUserInfoDialog(const Core::UserInfo& user_info,
                             const QMap<QString, QString>& details);
-    
+
     ChatWindow* openChatWindow(const Core::UserInfo& user_info, bool activate = true);
     ChatWindow* openGroupChatWindow(const Core::GroupInfo& group_info, bool activate = true);
     ChatWindow* findChatWindow(const QString& user_id);
-    
+    Core::UserInfo getSelectedUser() const { return m_local_user; } // Temporary helper
+
     void showNotification(const QString& title, const QString& message);
     QIcon statusIcon(Core::UserStatus status) const;
     QIcon actionIcon(const QString& name) const;
@@ -214,6 +224,9 @@ private:
     QMenu* m_user_context_menu;
     QListWidgetItem* m_current_context_item;
     QAction* m_view_info_action;
+
+    // 上下文信息
+    Core::UserInfo m_context_user_info;  // 当前右键选中的用户信息
     
     // 页面切换槽函数
     void onPageChanged(int index);

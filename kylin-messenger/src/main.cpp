@@ -179,13 +179,9 @@ int main(int argc, char* argv[])
     // 初始化轻量级服务
     qInfo() << "初始化轻量级服务...";
 
-    // 创建轻量级网络发现服务
+    // 暂时禁用微内核服务加载，使用独立服务
     auto lightweight_discovery = std::make_shared<Network::LightweightDiscovery>();
-    micro_kernel->loadService(lightweight_discovery, "lightweight_discovery");
-
-    // 创建并发文件传输服务
     auto concurrent_transfer = std::make_shared<Transfer::ConcurrentFileTransfer>();
-    micro_kernel->loadService(concurrent_transfer, "concurrent_file_transfer");
 
 #ifdef ENABLE_AI_FEATURES
     // 创建OpenCV NSFW检测器（如果可用）
@@ -194,7 +190,7 @@ int main(int argc, char* argv[])
         auto opencv_nsfw = std::make_shared<AI::LightweightNSFWDetector>(
             nsfw_config.modelPath, nsfw_config.threshold);
         if (opencv_nsfw->isAvailable()) {
-            micro_kernel->loadService(opencv_nsfw, "opencv_nsfw_detector");
+            main_window->setNSFWDetector(opencv_nsfw);
             qInfo() << "OpenCV NSFW检测器初始化成功";
         } else {
             qWarning() << "OpenCV NSFW检测器不可用";

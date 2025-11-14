@@ -807,12 +807,12 @@ void ChatWindow::sendTextMessage(const QString& text)
     }
 }
 
-bool ChatWindow::sendImageMessage(const QImage& image,
+void ChatWindow::sendImageMessage(const QImage& image,
                                   const QString& originalFileName,
                                   const QString& sourcePath)
 {
     if (!m_network_manager) {
-        return false;
+        return; // Safe return without status label
     }
 
     QByteArray image_data;
@@ -833,7 +833,7 @@ bool ChatWindow::sendImageMessage(const QImage& image,
     ComplianceResult compliance;
     if (!evaluateCompliance(payload, compliance)) {
         QMessageBox::warning(this, "提示", compliance.reason.isEmpty() ? QStringLiteral("图片发送已被合规策略阻止") : compliance.reason);
-        return false;
+        return;  // terminate on compliance failure
     }
 
     if (compliance.verdict == ComplianceVerdict::NeedsReview) {
@@ -876,11 +876,10 @@ bool ChatWindow::sendImageMessage(const QImage& image,
         addMessageToDisplay(message, true);
         m_message_history.push_back(message);
         persistMessage(message);
-        return true;
+        return;  // success
     }
 
     QMessageBox::warning(this, "错误", "图片发送失败");
-    return false;
 }
 
 void ChatWindow::sendEmojiMessage(const QString& emoji)
@@ -1145,10 +1144,9 @@ void ChatWindow::onSendFile()
             return;
         }
 
-        if (sendImageMessage(image, file_info.fileName(), file_info.absoluteFilePath())) {
-            appendSystemMessage(QStringLiteral("已通过 UDP 发送图片：%1")
-                                    .arg(file_info.fileName().toHtmlEscaped()));
-        }
+        sendImageMessage(image, file_info.fileName(), file_info.absoluteFilePath());
+        appendSystemMessage(QStringLiteral("已通过 UDP 发送图片：%1")
+                                .arg(file_info.fileName().toHtmlEscaped()));
         return;
     }
 

@@ -365,6 +365,14 @@
 		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/SelectLibraryConfigurations.cmake",
 		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindPackageHandleStandardArgs.cmake",
 		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindPackageMessage.cmake",
+		"D:/Anaconda/Library/cmake/OpenCVConfig-version.cmake",
+		"D:/Anaconda/Library/cmake/OpenCVConfig.cmake",
+		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindThreads.cmake",
+		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CheckLibraryExists.cmake",
+		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CheckIncludeFileCXX.cmake",
+		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/CheckCXXSourceCompiles.cmake",
+		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindPackageHandleStandardArgs.cmake",
+		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindPackageMessage.cmake",
 		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindGit.cmake",
 		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindPackageHandleStandardArgs.cmake",
 		"D:/ST/STM32CubeCLT_1.18.0/CMake/share/cmake-3.28/Modules/FindPackageMessage.cmake",
@@ -382,6 +390,12 @@
 	"DEP_FILE_RULE_NAME" : "kylin-messenger-core_autogen/timestamp",
 	"HEADERS" : 
 	[
+		[
+			"E:/Project/hmllm/kylin-messenger/include/ai/opencv_nsfw_detector.h",
+			"MU",
+			"XB3P7TCQNT/moc_opencv_nsfw_detector.cpp",
+			null
+		],
 		[
 			"E:/Project/hmllm/kylin-messenger/include/ai_echo_service.h",
 			"MU",
@@ -431,6 +445,12 @@
 			null
 		],
 		[
+			"E:/Project/hmllm/kylin-messenger/include/core/micro_kernel.h",
+			"MU",
+			"TNQXAZC2F3/moc_micro_kernel.cpp",
+			null
+		],
+		[
 			"E:/Project/hmllm/kylin-messenger/include/core/models.h",
 			"MU",
 			"TNQXAZC2F3/moc_models.cpp",
@@ -461,6 +481,12 @@
 			null
 		],
 		[
+			"E:/Project/hmllm/kylin-messenger/include/network/lightweight_discovery.h",
+			"MU",
+			"D7R3QBVKFK/moc_lightweight_discovery.cpp",
+			null
+		],
+		[
 			"E:/Project/hmllm/kylin-messenger/include/network_manager.h",
 			"MU",
 			"6YEA5652QU/moc_network_manager.cpp",
@@ -482,6 +508,12 @@
 			"E:/Project/hmllm/kylin-messenger/include/rknn_nsfw_compliance_service.h",
 			"MU",
 			"6YEA5652QU/moc_rknn_nsfw_compliance_service.cpp",
+			null
+		],
+		[
+			"E:/Project/hmllm/kylin-messenger/include/transfer/concurrent_file_transfer.h",
+			"MU",
+			"TYOKOTUKZZ/moc_concurrent_file_transfer.cpp",
 			null
 		],
 		[
@@ -588,6 +620,11 @@
 	"SOURCES" : 
 	[
 		[
+			"E:/Project/hmllm/kylin-messenger/src/ai/opencv_nsfw_detector.cpp",
+			"MU",
+			null
+		],
+		[
 			"E:/Project/hmllm/kylin-messenger/src/ai_echo_service.cpp",
 			"MU",
 			null
@@ -603,6 +640,11 @@
 			null
 		],
 		[ "E:/Project/hmllm/kylin-messenger/src/core/logging.cpp", "MU", null ],
+		[
+			"E:/Project/hmllm/kylin-messenger/src/core/micro_kernel.cpp",
+			"MU",
+			null
+		],
 		[ "E:/Project/hmllm/kylin-messenger/src/core/models.cpp", "MU", null ],
 		[
 			"E:/Project/hmllm/kylin-messenger/src/core/repositories/contact_repository.cpp",
@@ -616,12 +658,22 @@
 		],
 		[ "E:/Project/hmllm/kylin-messenger/src/network/ipmsg.cpp", "MU", null ],
 		[
+			"E:/Project/hmllm/kylin-messenger/src/network/lightweight_discovery.cpp",
+			"MU",
+			null
+		],
+		[
 			"E:/Project/hmllm/kylin-messenger/src/network/network_manager.cpp",
 			"MU",
 			null
 		],
 		[
 			"E:/Project/hmllm/kylin-messenger/src/services/compliance_stub_service.cpp",
+			"MU",
+			null
+		],
+		[
+			"E:/Project/hmllm/kylin-messenger/src/transfer/concurrent_file_transfer.cpp",
 			"MU",
 			null
 		],

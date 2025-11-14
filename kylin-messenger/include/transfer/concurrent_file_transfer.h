@@ -15,12 +15,14 @@
 #include <QTcpSocket>
 #include <QFile>
 #include <QTimer>
+#include <QUuid>
 #include <atomic>
 #include <memory>
 #include <vector>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <queue>
 
 namespace KylinMessenger::Transfer {
 
@@ -51,20 +53,23 @@ struct TransferTask {
     quint16 targetPort = 0;
     QString peerId;
     bool isSender = false;
-    std::atomic<int> activeBlocks{0};
+    std::shared_ptr<std::atomic<int>> activeBlocks;
     std::chrono::steady_clock::time_point startTime;
     std::chrono::steady_clock::time_point endTime;
-    
+
+    // 构造函数
+    TransferTask() : activeBlocks(std::make_shared<std::atomic<int>>(0)) {}
+
     // 分块信息
     static constexpr qint64 BLOCK_SIZE = 256 * 1024; // 256KB
     static constexpr int MAX_CONCURRENT_BLOCKS = 4;  // 最大并发块数
-    
+
     // 计算进度
     int progress() const {
         if (totalSize <= 0) return 0;
         return static_cast<int>((transferred * 100) / totalSize);
     }
-    
+
     // 计算速度（字节/秒）
     qint64 speed() const {
         if (status != TransferStatus::Transferring) return 0;
@@ -212,11 +217,11 @@ private:
     QTcpServer* tcpServer_ = nullptr;
     QTimer* queueTimer_ = nullptr;
     QTimer* cleanupTimer_ = nullptr;
-    
+
     // 任务管理
     std::unordered_map<QString, std::unique_ptr<TransferState>> transfers_;
     std::queue<QString> pendingTasks_;
-    std::mutex transfersMutex_;
+    mutable std::mutex transfersMutex_;
     
     // 线程池
     std::vector<std::thread> workerThreads_;

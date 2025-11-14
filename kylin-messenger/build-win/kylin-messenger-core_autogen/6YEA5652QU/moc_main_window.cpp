@@ -52,7 +52,18 @@ template <> constexpr inline auto KylinMessenger::MainWindow::qt_create_metaobje
         "message",
         "onGroupMessageReceived",
         "group_id",
+        "onMicroKernelEvent",
+        "Core::Event",
+        "event",
+        "onFileTransferProgress",
+        "task_id",
+        "transferred",
+        "total",
+        "onFileTransferCompleted",
+        "onFileTransferFailed",
+        "error",
         "onViewUserInfo",
+        "onAddContactFromContext",
         "onSearchTextChanged",
         "text",
         "onStatusChanged",
@@ -70,8 +81,7 @@ template <> constexpr inline auto KylinMessenger::MainWindow::qt_create_metaobje
         "onTrayIconActivated",
         "QSystemTrayIcon::ActivationReason",
         "reason",
-        "onTrayIconMessageClicked",
-        "onAddContactFromContext"
+        "onTrayIconMessageClicked"
     };
 
     QtMocHelpers::UintData qt_methods {
@@ -95,46 +105,62 @@ template <> constexpr inline auto KylinMessenger::MainWindow::qt_create_metaobje
         QtMocHelpers::SlotData<void(const QString &, const Core::ChatMessage &)>(11, 2, QMC::AccessPrivate, QMetaType::Void, {{
             { QMetaType::QString, 12 }, { 0x80000000 | 9, 10 },
         }}),
+        // Slot 'onMicroKernelEvent'
+        QtMocHelpers::SlotData<void(const Core::Event &)>(13, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { 0x80000000 | 14, 15 },
+        }}),
+        // Slot 'onFileTransferProgress'
+        QtMocHelpers::SlotData<void(const QString &, qint64, qint64)>(16, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::QString, 17 }, { QMetaType::LongLong, 18 }, { QMetaType::LongLong, 19 },
+        }}),
+        // Slot 'onFileTransferCompleted'
+        QtMocHelpers::SlotData<void(const QString &)>(20, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::QString, 17 },
+        }}),
+        // Slot 'onFileTransferFailed'
+        QtMocHelpers::SlotData<void(const QString &, const QString &)>(21, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::QString, 17 }, { QMetaType::QString, 22 },
+        }}),
         // Slot 'onViewUserInfo'
-        QtMocHelpers::SlotData<void()>(13, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(23, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'onAddContactFromContext'
+        QtMocHelpers::SlotData<void()>(24, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onSearchTextChanged'
-        QtMocHelpers::SlotData<void(const QString &)>(14, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { QMetaType::QString, 15 },
+        QtMocHelpers::SlotData<void(const QString &)>(25, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::QString, 26 },
         }}),
         // Slot 'onStatusChanged'
-        QtMocHelpers::SlotData<void(int)>(16, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { QMetaType::Int, 17 },
+        QtMocHelpers::SlotData<void(int)>(27, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::Int, 28 },
         }}),
         // Slot 'onStatusTextChanged'
-        QtMocHelpers::SlotData<void(const QString &)>(18, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { QMetaType::QString, 15 },
+        QtMocHelpers::SlotData<void(const QString &)>(29, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::QString, 26 },
         }}),
         // Slot 'showUserContextMenu'
-        QtMocHelpers::SlotData<void(const QPoint &, const Core::UserInfo &)>(19, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { QMetaType::QPoint, 20 }, { 0x80000000 | 3, 4 },
+        QtMocHelpers::SlotData<void(const QPoint &, const Core::UserInfo &)>(30, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { QMetaType::QPoint, 31 }, { 0x80000000 | 3, 4 },
         }}),
         // Slot 'onSendMessage'
-        QtMocHelpers::SlotData<void()>(21, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(32, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onSendFile'
-        QtMocHelpers::SlotData<void()>(22, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(33, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onSendScreenshot'
-        QtMocHelpers::SlotData<void()>(23, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(34, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onOpenAIChat'
-        QtMocHelpers::SlotData<void()>(24, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(35, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onSettings'
-        QtMocHelpers::SlotData<void()>(25, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(36, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onAbout'
-        QtMocHelpers::SlotData<void()>(26, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(37, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onQuit'
-        QtMocHelpers::SlotData<void()>(27, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(38, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'onTrayIconActivated'
-        QtMocHelpers::SlotData<void(QSystemTrayIcon::ActivationReason)>(28, 2, QMC::AccessPrivate, QMetaType::Void, {{
-            { 0x80000000 | 29, 30 },
+        QtMocHelpers::SlotData<void(QSystemTrayIcon::ActivationReason)>(39, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { 0x80000000 | 40, 41 },
         }}),
         // Slot 'onTrayIconMessageClicked'
-        QtMocHelpers::SlotData<void()>(31, 2, QMC::AccessPrivate, QMetaType::Void),
-        // Slot 'onAddContactFromContext'
-        QtMocHelpers::SlotData<void()>(32, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(42, 2, QMC::AccessPrivate, QMetaType::Void),
     };
     QtMocHelpers::UintData qt_properties {
     };
@@ -163,21 +189,25 @@ void KylinMessenger::MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Ca
         case 2: _t->onUserInfoUpdated((*reinterpret_cast< std::add_pointer_t<Core::UserInfo>>(_a[1]))); break;
         case 3: _t->onMessageReceived((*reinterpret_cast< std::add_pointer_t<Core::ChatMessage>>(_a[1]))); break;
         case 4: _t->onGroupMessageReceived((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<Core::ChatMessage>>(_a[2]))); break;
-        case 5: _t->onViewUserInfo(); break;
-        case 6: _t->onSearchTextChanged((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
-        case 7: _t->onStatusChanged((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
-        case 8: _t->onStatusTextChanged((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
-        case 9: _t->showUserContextMenu((*reinterpret_cast< std::add_pointer_t<QPoint>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<Core::UserInfo>>(_a[2]))); break;
-        case 10: _t->onSendMessage(); break;
-        case 11: _t->onSendFile(); break;
-        case 12: _t->onSendScreenshot(); break;
-        case 13: _t->onOpenAIChat(); break;
-        case 14: _t->onSettings(); break;
-        case 15: _t->onAbout(); break;
-        case 16: _t->onQuit(); break;
-        case 17: _t->onTrayIconActivated((*reinterpret_cast< std::add_pointer_t<QSystemTrayIcon::ActivationReason>>(_a[1]))); break;
-        case 18: _t->onTrayIconMessageClicked(); break;
-        case 19: _t->onAddContactFromContext(); break;
+        case 5: _t->onMicroKernelEvent((*reinterpret_cast< std::add_pointer_t<Core::Event>>(_a[1]))); break;
+        case 6: _t->onFileTransferProgress((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<qint64>>(_a[2])),(*reinterpret_cast< std::add_pointer_t<qint64>>(_a[3]))); break;
+        case 7: _t->onFileTransferCompleted((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
+        case 8: _t->onFileTransferFailed((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<QString>>(_a[2]))); break;
+        case 9: _t->onViewUserInfo(); break;
+        case 10: _t->onAddContactFromContext(); break;
+        case 11: _t->onSearchTextChanged((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
+        case 12: _t->onStatusChanged((*reinterpret_cast< std::add_pointer_t<int>>(_a[1]))); break;
+        case 13: _t->onStatusTextChanged((*reinterpret_cast< std::add_pointer_t<QString>>(_a[1]))); break;
+        case 14: _t->showUserContextMenu((*reinterpret_cast< std::add_pointer_t<QPoint>>(_a[1])),(*reinterpret_cast< std::add_pointer_t<Core::UserInfo>>(_a[2]))); break;
+        case 15: _t->onSendMessage(); break;
+        case 16: _t->onSendFile(); break;
+        case 17: _t->onSendScreenshot(); break;
+        case 18: _t->onOpenAIChat(); break;
+        case 19: _t->onSettings(); break;
+        case 20: _t->onAbout(); break;
+        case 21: _t->onQuit(); break;
+        case 22: _t->onTrayIconActivated((*reinterpret_cast< std::add_pointer_t<QSystemTrayIcon::ActivationReason>>(_a[1]))); break;
+        case 23: _t->onTrayIconMessageClicked(); break;
         default: ;
         }
     }
@@ -202,14 +232,14 @@ int KylinMessenger::MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void 
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 20)
+        if (_id < 24)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 20;
+        _id -= 24;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 20)
+        if (_id < 24)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 20;
+        _id -= 24;
     }
     return _id;
 }

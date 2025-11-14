@@ -1,4 +1,6 @@
 kylin-messenger-core_autogen/timestamp: \
+	D:/Anaconda/Library/cmake/OpenCVConfig-version.cmake \
+	D:/Anaconda/Library/cmake/OpenCVConfig.cmake \
 	D:/Qt/6.9.3/mingw_64/include/QtCore/QBuffer \
 	D:/Qt/6.9.3/mingw_64/include/QtCore/QByteArray \
 	D:/Qt/6.9.3/mingw_64/include/QtCore/QCryptographicHash \
@@ -561,6 +563,7 @@ kylin-messenger-core_autogen/timestamp: \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/cpp_type_traits.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/cxxabi_forced.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/cxxabi_init_exception.h \
+	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/deque.tcc \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/enable_special_members.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/erase_if.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/exception.h \
@@ -611,10 +614,12 @@ kylin-messenger-core_autogen/timestamp: \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/std_abs.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/std_function.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/std_mutex.h \
+	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/std_thread.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_algo.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_algobase.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_bvector.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_construct.h \
+	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_deque.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_function.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_heap.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_iterator.h \
@@ -626,6 +631,7 @@ kylin-messenger-core_autogen/timestamp: \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_multiset.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_numeric.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_pair.h \
+	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_queue.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_raw_storage_iter.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_relops.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stl_set.h \
@@ -638,6 +644,7 @@ kylin-messenger-core_autogen/timestamp: \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/streambuf_iterator.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/string_view.tcc \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/stringfwd.h \
+	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/this_thread_sleep.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/uniform_int_dist.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/unique_lock.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/bits/unique_ptr.h \
@@ -656,6 +663,7 @@ kylin-messenger-core_autogen/timestamp: \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/cmath \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/codecvt \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/compare \
+	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/condition_variable \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/cstddef \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/cstdint \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/cstdio \
@@ -666,6 +674,7 @@ kylin-messenger-core_autogen/timestamp: \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/cwctype \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/debug/assertions.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/debug/debug.h \
+	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/deque \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/exception \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/ext/aligned_buffer.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/ext/alloc_traits.h \
@@ -697,6 +706,7 @@ kylin-messenger-core_autogen/timestamp: \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/pstl/glue_memory_defs.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/pstl/glue_numeric_defs.h \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/pstl/pstl_config.h \
+	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/queue \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/ratio \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/set \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/sstream \
@@ -706,6 +716,7 @@ kylin-messenger-core_autogen/timestamp: \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/string \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/string_view \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/system_error \
+	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/thread \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/tr1/bessel_function.tcc \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/tr1/beta_function.tcc \
 	D:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/tr1/ell_integral.tcc \
@@ -826,6 +837,7 @@ kylin-messenger-core_autogen/timestamp: \
 	E:/Project/hmllm/kylin-messenger/build-win/CMakeFiles/3.28.1/CMakeRCCompiler.cmake \
 	E:/Project/hmllm/kylin-messenger/build-win/CMakeFiles/3.28.1/CMakeSystem.cmake \
 	E:/Project/hmllm/kylin-messenger/build-win/kylin-messenger-core_autogen/moc_predefs.h \
+	E:/Project/hmllm/kylin-messenger/include/ai/opencv_nsfw_detector.h \
 	E:/Project/hmllm/kylin-messenger/include/ai_echo_service.h \
 	E:/Project/hmllm/kylin-messenger/include/ai_service.h \
 	E:/Project/hmllm/kylin-messenger/include/ai_service_factory.h \
@@ -834,18 +846,21 @@ kylin-messenger-core_autogen/timestamp: \
 	E:/Project/hmllm/kylin-messenger/include/compliance_stub_service.h \
 	E:/Project/hmllm/kylin-messenger/include/core/di/service_locator.h \
 	E:/Project/hmllm/kylin-messenger/include/core/logging.h \
+	E:/Project/hmllm/kylin-messenger/include/core/micro_kernel.h \
 	E:/Project/hmllm/kylin-messenger/include/core/models.h \
 	E:/Project/hmllm/kylin-messenger/include/core/repositories/contact_repository.h \
 	E:/Project/hmllm/kylin-messenger/include/core/repositories/message_repository.h \
 	E:/Project/hmllm/kylin-messenger/include/main_window.h \
 	E:/Project/hmllm/kylin-messenger/include/network/constants.h \
 	E:/Project/hmllm/kylin-messenger/include/network/ipmsg.h \
+	E:/Project/hmllm/kylin-messenger/include/network/lightweight_discovery.h \
 	E:/Project/hmllm/kylin-messenger/include/network/payload_tags.h \
 	E:/Project/hmllm/kylin-messenger/include/network_manager.h \
 	E:/Project/hmllm/kylin-messenger/include/network_protocol.h \
 	E:/Project/hmllm/kylin-messenger/include/nsfw_compliance_service.h \
 	E:/Project/hmllm/kylin-messenger/include/qt_compat.h \
 	E:/Project/hmllm/kylin-messenger/include/rknn_nsfw_compliance_service.h \
+	E:/Project/hmllm/kylin-messenger/include/transfer/concurrent_file_transfer.h \
 	E:/Project/hmllm/kylin-messenger/include/ui/contact_list_page.h \
 	E:/Project/hmllm/kylin-messenger/include/ui/file_transfer_dialog.h \
 	E:/Project/hmllm/kylin-messenger/include/ui/group_list_page.h \
@@ -854,16 +869,20 @@ kylin-messenger-core_autogen/timestamp: \
 	E:/Project/hmllm/kylin-messenger/resources/emojis/emojis.qrc \
 	E:/Project/hmllm/kylin-messenger/resources/icons/icons.qrc \
 	E:/Project/hmllm/kylin-messenger/resources/qss/themes.qrc \
+	E:/Project/hmllm/kylin-messenger/src/ai/opencv_nsfw_detector.cpp \
 	E:/Project/hmllm/kylin-messenger/src/ai_echo_service.cpp \
 	E:/Project/hmllm/kylin-messenger/src/ai_service_factory.cpp \
 	E:/Project/hmllm/kylin-messenger/src/core/di/service_locator.cpp \
 	E:/Project/hmllm/kylin-messenger/src/core/logging.cpp \
+	E:/Project/hmllm/kylin-messenger/src/core/micro_kernel.cpp \
 	E:/Project/hmllm/kylin-messenger/src/core/models.cpp \
 	E:/Project/hmllm/kylin-messenger/src/core/repositories/contact_repository.cpp \
 	E:/Project/hmllm/kylin-messenger/src/core/repositories/in_memory_message_repository.cpp \
 	E:/Project/hmllm/kylin-messenger/src/network/ipmsg.cpp \
+	E:/Project/hmllm/kylin-messenger/src/network/lightweight_discovery.cpp \
 	E:/Project/hmllm/kylin-messenger/src/network/network_manager.cpp \
 	E:/Project/hmllm/kylin-messenger/src/services/compliance_stub_service.cpp \
+	E:/Project/hmllm/kylin-messenger/src/transfer/concurrent_file_transfer.cpp \
 	E:/Project/hmllm/kylin-messenger/src/ui/chat_window.cpp \
 	E:/Project/hmllm/kylin-messenger/src/ui/contact_list_page.cpp \
 	E:/Project/hmllm/kylin-messenger/src/ui/file_transfer_dialog.cpp \

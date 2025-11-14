@@ -312,6 +312,9 @@ GTest_DIR:PATH=D:/Anaconda/Library/lib/cmake/GTest
 //Path to system GoogleTest source tree
 KYLIN_GTEST_ROOT:PATH=/usr/src/googletest
 
+//The directory containing a CMake configuration file for OpenCV.
+OpenCV_DIR:PATH=D:/Anaconda/Library/cmake
+
 //Path to a file.
 Protobuf_INCLUDE_DIR:PATH=Protobuf_INCLUDE_DIR-NOTFOUND
 

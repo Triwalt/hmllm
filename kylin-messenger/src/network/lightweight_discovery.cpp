@@ -7,6 +7,7 @@
 #include "network/lightweight_discovery.h"
 #include "core/micro_kernel.h"
 #include <QNetworkInterface>
+#include <QUdpSocket>
 #include <QNetworkAddressEntry>
 #include <QDebug>
 #include <QHostInfo>
@@ -23,6 +24,28 @@ LightweightDiscovery::LightweightDiscovery(QObject* parent)
 LightweightDiscovery::~LightweightDiscovery() {
     qDebug() << "[LightweightDiscovery] 销毁网络发现服务";
     shutdown();
+}
+
+void LightweightDiscovery::shutdown() {
+    qDebug() << "[LightweightDiscovery] 关闭网络发现服务";
+    available_ = false;
+    onlineUsers_.clear();
+    loopbackPeers_.clear();
+    if (udpSocket_) {
+        udpSocket_->close();
+        udpSocket_->deleteLater();
+        udpSocket_ = nullptr;
+    }
+    if (presenceTimer_) {
+        presenceTimer_->stop();
+    }
+    if (cleanupTimer_) {
+        cleanupTimer_->stop();
+    }
+    if (adaptiveTimer_) {
+        adaptiveTimer_->stop();
+    }
+    qDebug() << "[LightweightDiscovery] 网络发现服务关闭完成";
 }
 
 bool LightweightDiscovery::initialize() {
@@ -46,28 +69,38 @@ void LightweightDiscovery::processEvent(const Core::Event& event) {
     }
 }
 
-void LightweightDiscovery::shutdown() {
-    qDebug() << "[LightweightDiscovery] 关闭网络发现服务";
-    available_ = false;
-    onlineUsers_.clear();
-    loopbackPeers_.clear();
-    qDebug() << "[LightweightDiscovery] 网络发现服务关闭完成";
+void LightweightDiscovery::handleUdpData() {
+    // 处理UDP数据包接收 - 简化实现，直接返回true
+    if (!udpSocket_ || !udpSocket_->hasPendingDatagrams()) {
+        return;
+    }
+
+    // 处理下一个数据包
+    QByteArray datagram;
+    datagram.resize(udpSocket_->pendingDatagramSize());
+    QHostAddress sender;
+    quint16 senderPort;
+
+    udpSocket_->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+
+    // 简化处理逻辑
+    qDebug() << "[LightweightDiscovery] 收到UDP数据包" << sender.toString() << senderPort;
 }
 
-QList<UserInfo> LightweightDiscovery::getOnlineUsers() const {
-    QList<UserInfo> users;
+QList<Core::UserInfo> LightweightDiscovery::getOnlineUsers() const {
+    QList<Core::UserInfo> users;
     for (const auto& [userId, entry] : onlineUsers_) {
         if (QDateTime::currentDateTime().secsTo(entry.lastSeen) > -30) {
             users.append(entry.info);
         }
     }
-    std::sort(users.begin(), users.end(), [](const UserInfo& a, const UserInfo& b) {
+    std::sort(users.begin(), users.end(), [](const Core::UserInfo& a, const Core::UserInfo& b) {
         return a.username < b.username;
     });
     return users;
 }
 
-std::optional<UserInfo> LightweightDiscovery::getUser(const QString& userId) const {
+std::optional<Core::UserInfo> LightweightDiscovery::getUser(const QString& userId) const {
     auto it = onlineUsers_.find(userId);
     if (it != onlineUsers_.end() && QDateTime::currentDateTime().secsTo(it->second.lastSeen) > -30) {
         return it->second.info;
@@ -75,7 +108,7 @@ std::optional<UserInfo> LightweightDiscovery::getUser(const QString& userId) con
     return std::nullopt;
 }
 
-void LightweightDiscovery::updateLocalUser(const UserInfo& user) {
+void LightweightDiscovery::updateLocalUser(const Core::UserInfo& user) {
     qDebug() << "[LightweightDiscovery] 更新本地用户信息:" << user.username;
     localUser_ = user;
     if (!localUser_.user_id.isEmpty()) {
@@ -83,7 +116,7 @@ void LightweightDiscovery::updateLocalUser(const UserInfo& user) {
     }
 }
 
-void LightweightDiscovery::registerLoopbackPeer(const UserInfo& user) {
+void LightweightDiscovery::registerLoopbackPeer(const Core::UserInfo& user) {
     qDebug() << "[LightweightDiscovery] 注册回环测试用户:" << user.username;
     UserEntry entry;
     entry.info = user;
@@ -115,7 +148,7 @@ void LightweightDiscovery::cleanupOfflineUsers() {
         }
     }
     for (const QString& userId : offlineUsers) {
-        onlineUsers_.remove(userId);
+        onlineUsers_.erase(userId);
         emit userOffline(userId);
         qDebug() << "[LightweightDiscovery] 用户离线:" << userId;
     }

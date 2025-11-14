@@ -110,7 +110,7 @@ private:
     QString conversationKey() const;
     
     void sendTextMessage(const QString& text);
-    void sendImageMessage(const QImage& image);
+    void sendImageMessage(const QImage& image, const QString& fileName = QString(), const QString& filePath = QString());
     void sendEmojiMessage(const QString& emoji);
     bool evaluateCompliance(const CompliancePayload& payload, ComplianceResult& result) const;
 

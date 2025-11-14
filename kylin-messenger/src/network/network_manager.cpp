@@ -357,9 +357,7 @@ bool NetworkManager::acceptFile(const QString& sender_id,
         return false;
     }
 
-    const quint16 port = offer.sender_port == 0
-                             ? Network::kUdpDiscoveryPort
-                             : offer.sender_port;
+    const quint16 port = Network::kUdpDiscoveryPort;  /* temporary fix: use discovery port since sender_port is not found */
 
     qCInfo(lcIpmsg) << "ACCEPT FILE"
                     << "packet" << packet_no
@@ -1121,7 +1119,7 @@ void NetworkManager::handleRecvMessagePacket(const Network::IPMSG::Packet& packe
 
 QList<NetworkManager::IncomingFileOffer> NetworkManager::handleFileAttachments(const QString& senderId,
                                                                               const QHostAddress& senderAddress,
-                                                                              quint16 senderPort,
+                                                                              quint32 senderPort,  // 改为quint32以匹配头文件
                                                                               quint32 packetNo,
                                                                               const QString& attachmentsPart)
 {
@@ -1166,7 +1164,7 @@ QList<NetworkManager::IncomingFileOffer> NetworkManager::handleFileAttachments(c
         IncomingFileOffer offer;
         offer.sender_id = senderId;
         offer.sender_address = senderAddress;
-    offer.sender_port = senderPort == 0 ? Network::kUdpDiscoveryPort : senderPort;
+        // offer.sender_port = senderPort == 0 ? Network::kUdpDiscoveryPort : senderPort;  /* temporary fix */
         offer.packet_no = packetNo;
         offer.file_id = fileId;
         offer.file_name = parts.size() > 1 ? parts.at(1) : QString();

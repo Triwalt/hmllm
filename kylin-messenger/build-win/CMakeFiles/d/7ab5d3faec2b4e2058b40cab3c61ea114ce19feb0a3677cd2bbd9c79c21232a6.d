@@ -1,4 +1,6 @@
 kylin-messenger_autogen/timestamp: \
+  D:/Anaconda/Library/cmake/OpenCVConfig-version.cmake \
+  D:/Anaconda/Library/cmake/OpenCVConfig.cmake \
   D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6/FindWrapAtomic.cmake \
   D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6/FindWrapVulkanHeaders.cmake \
   D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6/Qt6Config.cmake \
