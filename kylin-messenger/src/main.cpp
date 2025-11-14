@@ -27,6 +27,11 @@
 #include "core/logging.h"
 #include "core/di/service_locator.h"
 #include "core/repositories/message_repository.h"
+// 新增轻量级组件
+#include "core/micro_kernel.h"
+#include "ai/opencv_nsfw_detector.h"
+#include "network/lightweight_discovery.h"
+#include "transfer/concurrent_file_transfer.h"
 
 using namespace KylinMessenger;
 
@@ -141,6 +146,11 @@ int main(int argc, char* argv[])
     QApplication app(argc, argv);
     Core::Logging::initialize();
     auto& locator = Core::DI::ServiceLocator::instance();
+
+    // 创建微内核实例
+    auto micro_kernel = std::make_shared<Core::MicroKernel>();
+    locator.registerService<Core::MicroKernel>(micro_kernel);
+
     Q_INIT_RESOURCE(icons);
     Q_INIT_RESOURCE(emojis);
     Q_INIT_RESOURCE(themes);
@@ -162,28 +172,67 @@ int main(int argc, char* argv[])
     qInfo() << "Qt版本:" << QT_VERSION_STR;
     qInfo() << "========================================";
     
-    // 创建网络管理器
+    // 创建网络管理器（兼容模式）
     auto network_manager = std::make_shared<NetworkManager>();
     locator.registerService<NetworkManager>(network_manager);
-    
+
+    // 初始化轻量级服务
+    qInfo() << "初始化轻量级服务...";
+
+    // 创建轻量级网络发现服务
+    auto lightweight_discovery = std::make_shared<Network::LightweightDiscovery>();
+    micro_kernel->loadService(lightweight_discovery, "lightweight_discovery");
+
+    // 创建并发文件传输服务
+    auto concurrent_transfer = std::make_shared<Transfer::ConcurrentFileTransfer>();
+    micro_kernel->loadService(concurrent_transfer, "concurrent_file_transfer");
+
+#ifdef ENABLE_AI_FEATURES
+    // 创建OpenCV NSFW检测器（如果可用）
+    try {
+        auto nsfw_config = AI::NSFWDetectorConfig::fromEnvironment();
+        auto opencv_nsfw = std::make_shared<AI::LightweightNSFWDetector>(
+            nsfw_config.modelPath, nsfw_config.threshold);
+        if (opencv_nsfw->isAvailable()) {
+            micro_kernel->loadService(opencv_nsfw, "opencv_nsfw_detector");
+            qInfo() << "OpenCV NSFW检测器初始化成功";
+        } else {
+            qWarning() << "OpenCV NSFW检测器不可用";
+        }
+    } catch (const std::exception& e) {
+        qWarning() << "OpenCV NSFW检测器初始化失败:" << e.what();
+    }
+#endif
+
+    // 启动微内核
+    if (!micro_kernel->start()) {
+        QMessageBox::critical(nullptr, "错误",
+            "无法启动微内核服务\n请检查服务配置");
+        return 1;
+    }
+    qInfo() << "微内核服务启动成功";
+
     // 初始化本地用户信息
     UserInfo local_user;
     local_user.user_id = QUuid::createUuid().toString();
-    local_user.username = qgetenv("USER").isEmpty() ? 
+    local_user.username = qgetenv("USER").isEmpty() ?
         QStringLiteral("User") : QString::fromLocal8Bit(qgetenv("USER"));
     local_user.status = UserStatus::Online;
     local_user.status_text = "在线";
-    
+
     qInfo() << "本地用户ID:" << local_user.user_id;
     qInfo() << "用户名:" << local_user.username;
-    
-    // 初始化网络
+
+    // 设置轻量级网络发现的本地用户信息
+    lightweight_discovery->updateLocalUser(local_user);
+
+    // 初始化网络（兼容模式）
     if (!network_manager->initialize(local_user)) {
-        QMessageBox::critical(nullptr, "错误", 
+        QMessageBox::critical(nullptr, "错误",
             "无法初始化网络管理器\n请检查网络连接和权限");
         return 1;
     }
-    
+
     qInfo() << "网络管理器初始化成功";
 
     auto message_repository = std::make_shared<Core::Repositories::InMemoryMessageRepository>();
@@ -269,15 +318,20 @@ int main(int argc, char* argv[])
         qWarning() << "合规审查服务当前不可用，所有消息将直接放行";
     }
     
-    // 创建主窗口
+    // 创建主窗口（支持微内核架构）
     qInfo() << "[main] 开始创建 MainWindow 对象";
-    MainWindow main_window;
+    MainWindow main_window(micro_kernel.get());  // 传递微内核实例
     qInfo() << "[main] MainWindow 对象创建完成";
-    
+
     qInfo() << "[main] 设置 NetworkManager";
     main_window.setNetworkManager(network_manager.get());
     qInfo() << "[main] NetworkManager 设置完成";
-    
+
+    // 设置轻量级服务
+    qInfo() << "[main] 设置轻量级服务";
+    main_window.setLightweightDiscovery(lightweight_discovery);
+    main_window.setConcurrentFileTransfer(concurrent_transfer);
+
     if (ai_service) {
         qInfo() << "[main] 设置 AIService";
         main_window.setAIService(ai_service);

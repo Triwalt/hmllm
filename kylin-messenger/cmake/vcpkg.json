@@ -1,0 +1,59 @@
+{
+  "name": "kylin-messenger",
+  "version": "2.0.0",
+  "description": "Lightweight LAN messenger with AI features",
+  "dependencies": [
+    {
+      "name": "qt5-base",
+      "default-features": false,
+      "features": ["gui", "widgets", "network"]
+    },
+    {
+      "name": "opencv",
+      "default-features": false,
+      "features": ["dnn", "imgproc", "imgcodecs"]
+    },
+    {
+      "name": "protobuf",
+      "version": ">=3.21.0"
+    },
+    {
+      "name": "zlib",
+      "version": ">=1.2.11"
+    },
+    {
+      "name": "nlohmann-json",
+      "version": ">=3.11.0"
+    }
+  ],
+  "features": {
+    "qt6": {
+      "description": "Use Qt6 instead of Qt5",
+      "dependencies": [
+        {
+          "name": "qt6-base",
+          "default-features": false,
+          "features": ["gui", "widgets", "network"]
+        }
+      ]
+    },
+    "rknn": {
+      "description": "Enable RKNN NPU support",
+      "dependencies": [
+        {
+          "name": "rknn-api",
+          "platform": "linux & (arm | aarch64)"
+        }
+      ]
+    },
+    "tests": {
+      "description": "Build unit tests",
+      "dependencies": [
+        {
+          "name": "gtest",
+          "version": ">=1.12.0"
+        }
+      ]
+    }
+  }
+}

@@ -25,6 +25,11 @@
 #include "ui/user_list_page.h"
 #include "ui/contact_list_page.h"
 #include "ui/group_list_page.h"
+// 新增轻量级组件
+#include "core/micro_kernel.h"
+#include "network/lightweight_discovery.h"
+#include "transfer/concurrent_file_transfer.h"
+#include "ai/opencv_nsfw_detector.h"
 
 namespace KylinMessenger {
 
@@ -32,20 +37,27 @@ class ChatWindow;
 
 /**
  * @brief 主窗口类
- * 
+ *
  * 应用程序的主窗口，包含：
  * - 在线用户列表
  * - 用户搜索和过滤
  * - 状态设置
  * - 系统托盘
  * - 菜单和工具栏
+ *
+ * 支持微内核架构，通过事件驱动与轻量级服务通信
  */
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-    
+
 public:
-    explicit MainWindow(QWidget* parent = nullptr);
+    /**
+     * @brief 构造函数
+     * @param micro_kernel 微内核实例（可选，如果提供则启用事件驱动模式）
+     * @param parent 父窗口
+     */
+    explicit MainWindow(Core::MicroKernel* micro_kernel = nullptr, QWidget* parent = nullptr);
     virtual ~MainWindow();
     
     /**
@@ -61,6 +73,18 @@ public:
     void setAIService(std::shared_ptr<IAIService> ai_service);
 
     void setComplianceService(std::shared_ptr<IComplianceService> compliance_service);
+
+    /**
+     * @brief 设置轻量级网络发现服务
+     * @param discovery 轻量级网络发现服务
+     */
+    void setLightweightDiscovery(std::shared_ptr<Network::LightweightDiscovery> discovery);
+
+    /**
+     * @brief 设置并发文件传输服务
+     * @param transfer 并发文件传输服务
+     */
+    void setConcurrentFileTransfer(std::shared_ptr<Transfer::ConcurrentFileTransfer> transfer);
     
 protected:
     void closeEvent(QCloseEvent* event) override;
@@ -72,6 +96,12 @@ private slots:
     void onUserInfoUpdated(const Core::UserInfo& user_info);
     void onMessageReceived(const Core::ChatMessage& message);
     void onGroupMessageReceived(const QString& group_id, const Core::ChatMessage& message);
+
+    // 事件驱动处理（微内核架构）
+    void onMicroKernelEvent(const Core::Event& event);
+    void onFileTransferProgress(const QString& task_id, qint64 transferred, qint64 total);
+    void onFileTransferCompleted(const QString& task_id);
+    void onFileTransferFailed(const QString& task_id, const QString& error);
     
     // UI事件处理
     void onViewUserInfo();
@@ -128,16 +158,25 @@ private:
     void applyAutoDownloadConfig(ChatWindow* window) const;
 
 private:
+    // 微内核架构支持
+    Core::MicroKernel* m_micro_kernel;
+    bool m_use_event_driven;
+
     // 网络
     NetworkManager* m_network_manager;
     Core::UserInfo m_local_user;
     Core::UserInfo m_loopback_user;
-    
+
     // AI服务
     std::shared_ptr<IAIService> m_ai_service;
     std::shared_ptr<IComplianceService> m_compliance_service;
     std::shared_ptr<Core::Repositories::MessageRepository> m_message_repository;
     std::shared_ptr<Core::Repositories::IContactRepository> m_contact_repository;
+
+    // 轻量级服务
+    std::shared_ptr<Network::LightweightDiscovery> m_lightweight_discovery;
+    std::shared_ptr<Transfer::ConcurrentFileTransfer> m_concurrent_transfer;
+    std::shared_ptr<AI::LightweightNSFWDetector> m_opencv_nsfw_detector;
     
     // UI组件 - 页面管理
     QStackedWidget* m_stacked_widget;
