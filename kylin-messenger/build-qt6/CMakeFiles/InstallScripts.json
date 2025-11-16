@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/mnt/e/Project/hmllm/kylin-messenger/build-qt6/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

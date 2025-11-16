@@ -1,6 +1,6 @@
 # Kylin Messenger
 
-**一个现代化的P2P局域网通讯应用，集成NPU加速的AI功能**
+一个现代化的 P2P 局域网通讯应用，集成 NPU 加速的 AI 功能。
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Qt](https://img.shields.io/badge/Qt-6.x-green.svg)](https://www.qt.io/)
@@ -8,7 +8,7 @@
 
 ---
 
-## 📋 目录
+## 目录
 
 - [项目概述](#项目概述)
 - [核心特性](#核心特性)
@@ -23,7 +23,7 @@
 
 ---
 
-## 🎯 项目概述
+## 项目概述
 
 **Kylin Messenger** 是一个专为瑞芯微开发板和麒麟操作系统设计的现代化P2P局域网通讯应用。它复刻了经典飞秋软件的核心功能，同时创新性地集成了基于NPU加速的AI特性。
 
@@ -38,7 +38,7 @@
 
 ---
 
-## ✨ 核心特性
+## 核心特性
 
 ### 网络通信
 
@@ -67,9 +67,9 @@
 
 ---
 
-## 🏗️ 系统架构
+## 系统架构
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                      Kylin Messenger                        │
 │                      (Qt 6 Application)                     │
@@ -122,40 +122,46 @@
 
 ---
 
-## 🔧 技术栈
+## 技术栈
 
 ### 核心框架
+
 - **Qt 6**: 跨平台GUI框架
 - **C++17**: 现代C++标准
 - **CMake 3.16+**: 构建系统
 
 ### 网络层
+
 - **QUdpSocket**: UDP广播用户发现
 - **QTcpServer/QTcpSocket**: TCP可靠传输
 - **自定义协议**: 二进制协议，CRC32校验
 
 ### AI层
+
 - **RKNN Runtime**: 瑞芯微NPU运行时
 - **libllm-rknn**: LLM推理库
 - **抽象接口**: 模块化AI服务设计
 
 ### 依赖库
+
 - Qt6Core, Qt6Widgets, Qt6Network
 - librknnrt.so (RKNN运行时)
 - libllm-rknn.so (可选，用于LLM功能)
 
 ---
 
-## 🚀 构建指南
+## 构建指南
 
 ### 前提条件
 
 #### 硬件
+
 - 瑞芯微开发板（RK3588/RK3576/RK3568等）
 - 至少2GB RAM
 - 支持NPU的SoC
 
 #### 软件
+
 - 麒麟操作系统 (Debian-based)
 - Qt 6.2+
 - CMake 3.16+
@@ -246,7 +252,7 @@ sudo make install
 
 ---
 
-## 📦 安装说明
+## 安装说明
 
 ### 从DEB包安装（推荐）
 
@@ -283,7 +289,7 @@ sudo make uninstall
 
 ---
 
-## 📖 使用指南
+## 使用指南
 
 ### 首次运行
 
@@ -294,44 +300,99 @@ sudo make uninstall
 ### 基本操作
 
 #### 发送消息
+
 1. 在用户列表中选择用户
 2. 双击或右键点击"发送消息"
 3. 在聊天窗口输入消息并发送
 
 #### 发送文件
+
 - 方法1: 右键用户 → "发送文件"
 - 方法2: 拖放文件到聊天窗口
 - 方法3: 点击聊天窗口的文件按钮
 
 #### 发送截图
+
 1. 点击截图按钮或按 `Ctrl+Alt+A`
 2. 拖动选择截图区域
 3. 截图自动发送到当前聊天
 
 #### 群组管理
+
 1. 右键用户 → "添加到组"
 2. 创建新组或选择现有组
 3. 对组发送消息：右键组 → "发送组消息"
 
+### Qt Quick 预览界面（实验性）
+
+> ⚠️ 该模式目前主要用于验证全新界面方案，仍在快速迭代中，功能与经典桌面版相比有精简。
+
+1. 启动命令：
+
+```bash
+kylin-messenger --quick-ui
+```
+
+1. 主要功能：
+   - 左侧实时展示在线联系人，可刷新或选择聊天对象
+   - 右侧提供现代化对话视图，支持发送/广播纯文本、查看收发记录、查看发送提醒
+   - 底部文本框支持多行输入；广播按钮可立即推送局域网广播
+   - 顶部工具栏会显示本机当前用户名与状态
+1. 合规与网络：沿用核心 `NetworkManager` 和合规服务设置，因此消息发送/接收与经典界面共用同一后台
+1. 已知限制：
+   - 暂未接入文件传输、表情、AI 会话等高级功能
+   - 设置项/主题切换尚待补齐
+   - 退出后不会持久化 Quick UI 内的消息历史
+
+若在开发环境调试 QML，可搭配 `QT_QUICK_CONTROLS_STYLE=Fusion` 或 `QML_IMPORT_TRACE=1` 获得更多日志信息。
+
+### Windows 运行时部署
+
+Qt Quick 依赖的 DLL/QML 插件不会自动复制到构建目录。项目提供了自动化脚本 `scripts/windeployqt.ps1`，会执行以下操作：
+
+- 调用 `windeployqt`，复制 `Qt6QuickControls2.dll`, `Qt6Qml.dll`、`Qt6Quick.dll`、`QtQmlModels.dll` 以及所需 QML 插件；
+- 将 `resources/windows/qt.conf` 拷贝到可执行文件旁，强制 Qt 在运行时优先加载本地 `plugins/` 和 `qml/` 目录，避免 PATH 中其他软件携带的旧版 Qt 干扰。
+
+使用方式：
+
+```powershell
+Set-Location E:/Project/hmllm/kylin-messenger
+# 指定 Qt 安装路径。可设置 QT_ROOT 或 QT_BIN 后跳过参数。
+.\scripts\windeployqt.ps1 -BuildDir build-win -Configuration Release -QtRoot "D:/Qt/6.9.3/mingw_64"
+```
+
+执行完成后，可直接在 `build-win/Release`（多配置生成器）或 `build-win` 根目录（单配置 Ninja/MinGW）内找到带完整依赖的 `kylin-messenger.exe`。如需自定义 QML 目录或跳过 `qt.conf`，可使用 `-SkipQtConf` 参数。
+
+若仍出现 “找不到 Qt6QuickControls2.dll” 或 “无法定位 Qt6Qml.dll 输入点” 等错误，通常是运行时找到了其他软件自带的旧版 Qt（例如 STM32 工具链）。建议：
+
+1. 始终从脚本产出的 Release 目录启动应用，确保加载本地 DLL；
+2. 如需从任意目录启动，可在对应终端中临时设置 `set PATH=D:\Qt\6.9.3\mingw_64\bin;%PATH%`，或者为第三方工具单独创建启动脚本，避免其 Qt 目录排在前面；
+3. 确认 `qt.conf` 与 `qml/` 同目录存在，可阻止 Qt 搜索系统级 QML 插件，进一步降低冲突概率。
+
+将整个 Release 目录打包后，即可在无 Qt 环境的机器上直接运行。
+
 ### AI功能使用
 
 #### AI聊天助手
+
 1. 在用户列表中找到"AI助手"
 2. 双击打开聊天窗口
 3. 向AI提问，获得本地化LLM回复
 
 #### 智能回复
+
 1. 接收消息时，窗口底部显示智能回复建议
 2. 点击建议按钮快速回复
 
 #### 图像标注
+
 1. 发送截图或图片时
 2. AI自动检测并标注图像内容
 3. 标签显示在图片下方
 
 ---
 
-## 🤖 AI功能
+## AI 功能
 
 ### AI服务架构
 
@@ -358,12 +419,14 @@ public:
 基于libllm-rknn实现，提供本地化大语言模型对话。
 
 **特性**:
+
 - 完全本地运行，无需联网
 - NPU加速，低延迟响应
 - 支持多轮对话上下文
 - 流式输出，实时显示
 
 **使用**:
+
 ```cpp
 auto llm = AIServiceFactory::createService("llm_chat");
 llm->initialize("/path/to/model.rknn");
@@ -375,11 +438,13 @@ auto result = llm->processText("你好，请介绍一下自己");
 使用YOLO模型进行目标检测和标注。
 
 **特性**:
+
 - 实时目标检测
 - 自动生成描述性标签
 - 支持80+类别物体识别
 
 **使用**:
+
 ```cpp
 auto tagger = AIServiceFactory::createService("image_tagger");
 tagger->initialize("/path/to/yolo.rknn");
@@ -392,11 +457,13 @@ auto result = tagger->processImage(screenshot);
 基于文本分类模型生成快速回复建议。
 
 **特性**:
+
 - 上下文感知
 - 3个智能建议
 - 支持中英文
 
 **使用**:
+
 ```cpp
 auto reply = AIServiceFactory::createService("smart_reply");
 reply->initialize("/path/to/classifier.rknn");
@@ -430,14 +497,14 @@ public:
 };
 ```
 
-2. **注册到工厂**:
+1. **注册到工厂**:
 
 ```cpp
 AIServiceFactory::registerService("my_service", 
     []() { return std::make_unique<MyAIService>(); });
 ```
 
-3. **使用服务**:
+1. **使用服务**:
 
 ```cpp
 auto service = AIServiceFactory::createService("my_service");
@@ -449,7 +516,7 @@ auto service = AIServiceFactory::createService("my_service");
 
 ### 项目结构
 
-```
+```text
 kylin-messenger/
 ├── src/                    # 源代码
 │   ├── main.cpp           # 应用入口
@@ -528,11 +595,11 @@ make docs
 
 ## � 联系方式
 
-- 项目主页: https://github.com/yourusername/kylin-messenger
-- 问题反馈: https://github.com/yourusername/kylin-messenger/issues
-- 邮箱: your.email@example.com
+- 项目主页: [github.com/yourusername/kylin-messenger](https://github.com/yourusername/kylin-messenger)
+- 问题反馈: [github.com/yourusername/kylin-messenger/issues](https://github.com/yourusername/kylin-messenger/issues)
+- 邮箱: [your.email@example.com](mailto:your.email@example.com)
 
 ---
 
-**用 ❤️ 为麒麟生态打造**
+### 用 ❤️ 为麒麟生态打造
 

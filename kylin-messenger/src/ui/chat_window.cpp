@@ -1,6 +1,5 @@
 // chat_window.cpp - 聊天窗口实现
 #include "chat_window.h"
-#include "ui/file_transfer_dialog.h"
 #include <QFileDialog>
 #include <QFile>
 #include <QFileInfo>
@@ -808,18 +807,22 @@ void ChatWindow::sendTextMessage(const QString& text)
 }
 
 void ChatWindow::sendImageMessage(const QImage& image,
-                                  const QString& originalFileName,
-                                  const QString& sourcePath)
+                                  const QString& fileName,
+                                  const QString& filePath)
 {
     if (!m_network_manager) {
-        return; // Safe return without status label
+        return;
     }
 
+    Q_UNUSED(fileName);
+    Q_UNUSED(filePath);
+    
+    // 将图像转换为Base64
     QByteArray image_data;
     QBuffer buffer(&image_data);
     buffer.open(QIODevice::WriteOnly);
     image.save(&buffer, "PNG");
-
+    
     CompliancePayload payload;
     payload.target = ComplianceTarget::Image;
     payload.conversation_id = m_peer_info.user_id;
@@ -833,7 +836,7 @@ void ChatWindow::sendImageMessage(const QImage& image,
     ComplianceResult compliance;
     if (!evaluateCompliance(payload, compliance)) {
         QMessageBox::warning(this, "提示", compliance.reason.isEmpty() ? QStringLiteral("图片发送已被合规策略阻止") : compliance.reason);
-        return;  // terminate on compliance failure
+        return;
     }
 
     if (compliance.verdict == ComplianceVerdict::NeedsReview) {
@@ -843,43 +846,34 @@ void ChatWindow::sendImageMessage(const QImage& image,
     const QString verdict_code = verdictCodeFromResult(compliance.verdict);
     const QString verdict_reason = compliance.reason.trimmed();
 
-    const QString base64_image = QString::fromLatin1(image_data.toBase64());
-
+    QString base64_image = QString::fromLatin1(image_data.toBase64());
+    
     ChatMessage message;
     message.message_id = payload.message_id;
-    const QString sender_id = payload.local_user_id;
+    QString sender_id = payload.local_user_id;
     message.sender_id = sender_id;
     message.receiver_id = m_peer_info.user_id;
     message.message_type = MessageContentType::Image;
     message.content = base64_image;
     message.timestamp = QDateTime::currentDateTime();
-
+    
     if (!verdict_code.isEmpty()) {
         message.metadata.insert(QLatin1String(kComplianceVerdictKey), verdict_code);
         if (!verdict_reason.isEmpty()) {
             message.metadata.insert(QLatin1String(kComplianceReasonKey), verdict_reason);
         }
     }
-
-    if (!originalFileName.isEmpty()) {
-        message.metadata.insert(QStringLiteral("file_name"), originalFileName);
-    }
-    if (!sourcePath.isEmpty()) {
-        message.metadata.insert(QStringLiteral("local_path"), QDir::toNativeSeparators(sourcePath));
-    }
-    message.metadata.insert(QStringLiteral("transfer_protocol"), QStringLiteral("udp"));
-
+    
     ChatMessage outbound = message;
     outbound.content = Network::PayloadTags::applyImagePrefix(base64_image);
 
     if (m_network_manager->sendMessage(m_peer_info.user_id, outbound)) {
-        addMessageToDisplay(message, true);
-        m_message_history.push_back(message);
+    addMessageToDisplay(message, true);
+    m_message_history.push_back(message);
         persistMessage(message);
-        return;  // success
+    } else {
+        QMessageBox::warning(this, "错误", "图片发送失败");
     }
-
-    QMessageBox::warning(this, "错误", "图片发送失败");
 }
 
 void ChatWindow::sendEmojiMessage(const QString& emoji)
@@ -1114,48 +1108,20 @@ void ChatWindow::addMessageToDisplay(const ChatMessage& message, bool is_sent)
 
 void ChatWindow::onSendFile()
 {
-    if (!m_network_manager) {
-        QMessageBox::warning(this, "错误", "网络管理器未初始化，无法发送文件。");
+    QString filepath = QFileDialog::getOpenFileName(
+        this, "选择文件", "", "所有文件 (*)");
+    
+    if (filepath.isEmpty()) {
         return;
     }
 
-    FileTransferDialog dialog(this);
-    if (dialog.exec() != QDialog::Accepted) {
-        return;
-    }
-
-    const QFileInfo file_info = dialog.selectedFile();
-    if (!file_info.exists() || !file_info.isFile()) {
-        QMessageBox::warning(this, "错误", "所选文件不可用，请重试。");
-        return;
-    }
-
-    const bool use_udp = dialog.selectedProtocol() == FileTransferDialog::Protocol::UDP;
-
-    if (use_udp) {
-        if (!dialog.isImage()) {
-            QMessageBox::warning(this, "提示", "当前文件无法通过 UDP 发送，请改用 TCP 方式。");
-            return;
-        }
-
-        QImage image(file_info.absoluteFilePath());
-        if (image.isNull()) {
-            QMessageBox::warning(this, "错误", "图片加载失败，无法发送。");
-            return;
-        }
-
-        sendImageMessage(image, file_info.fileName(), file_info.absoluteFilePath());
-        appendSystemMessage(QStringLiteral("已通过 UDP 发送图片：%1")
-                                .arg(file_info.fileName().toHtmlEscaped()));
-        return;
-    }
-
-    QFile file(file_info.absoluteFilePath());
+    QFile file(filepath);
     if (!file.open(QIODevice::ReadOnly)) {
         QMessageBox::warning(this, "错误", "无法打开所选文件。");
         return;
     }
 
+    QFileInfo file_info(filepath);
     QByteArray binary = file.readAll();
     file.close();
 
@@ -1172,11 +1138,6 @@ void ChatWindow::onSendFile()
     payload.text = file_info.fileName();
     payload.is_outgoing = true;
 
-    const QString content_type = imageMimeType(file_info.fileName());
-    if (!content_type.isEmpty()) {
-        payload.content_type = content_type;
-    }
-
     ComplianceResult compliance;
     if (!evaluateCompliance(payload, compliance)) {
         QMessageBox::warning(this, "提示", compliance.reason.isEmpty() ? QStringLiteral("文件发送已被合规策略阻止") : compliance.reason);
@@ -1189,7 +1150,7 @@ void ChatWindow::onSendFile()
 
     ChatMessage message;
     message.message_id = payload.message_id;
-    const QString sender_id = payload.local_user_id;
+    QString sender_id = payload.local_user_id;
     message.sender_id = sender_id;
     message.receiver_id = m_peer_info.user_id;
     message.message_type = MessageContentType::File;
@@ -1200,10 +1161,15 @@ void ChatWindow::onSendFile()
     message.metadata[QStringLiteral("hash")] = QString::fromLatin1(hash.toHex());
     message.metadata[QStringLiteral("local_path")] = QDir::toNativeSeparators(file_info.absoluteFilePath());
     message.metadata[QStringLiteral("transfer_status")] = QStringLiteral("pending");
-    message.metadata[QStringLiteral("transfer_protocol")] = QStringLiteral("tcp");
 
+    const QString content_type = imageMimeType(file_info.fileName());
     if (!content_type.isEmpty()) {
         message.metadata[QStringLiteral("content_type")] = content_type;
+    }
+
+    if (!m_network_manager) {
+        QMessageBox::warning(this, "错误", "网络管理器未初始化，无法发送文件。");
+        return;
     }
 
     quint32 packet_no = 0;
@@ -1676,11 +1642,6 @@ void ChatWindow::applyPendingTransferMetadata(const QString& message_id,
         if (normalized == QStringLiteral("failed") || normalized == QStringLiteral("offered")) {
             transfer.accepted = false;
         }
-        qCDebug(lcChatWindow) << "Transfer status metadata update"
-                              << message_id
-                              << "status:" << normalized
-                              << "accepted:" << transfer.accepted
-                              << "completed:" << transfer.completed;
     } else if (key == QStringLiteral("content_type")) {
         transfer.content_type = removed ? QString() : value;
     }
@@ -1700,15 +1661,7 @@ void ChatWindow::maybeAutoAcceptImageTransfer(const QString& message_id)
     }
 
     PendingTransfer transfer = m_pending_transfers.value(message_id);
-
-    qCDebug(lcChatWindow) << "Evaluating auto-accept"
-                          << message_id
-                          << "outgoing:" << transfer.is_outgoing
-                          << "accepted:" << transfer.accepted
-                          << "completed:" << transfer.completed
-                          << "peer:" << transfer.peer_id
-                          << "saved_path:" << transfer.saved_path;
-
+    
     // 修复：对于loopback场景，如果文件提供来自网络（通过onNetworkFileOffer接收），
     // 即使is_outgoing为true，也应该允许自动下载（因为这是通过网络接收的）
     bool should_allow_auto_accept = false;
@@ -1720,21 +1673,14 @@ void ChatWindow::maybeAutoAcceptImageTransfer(const QString& message_id)
                 should_allow_auto_accept = true;
                 transfer.is_outgoing = false;  // 重置为false以允许自动下载
                 m_pending_transfers.insert(message_id, transfer);
-                qCDebug(lcChatWindow) << "Allow auto-accept for loopback received message"
-                                      << message_id
-                                      << "sender:" << msg.sender_id
-                                      << "receiver:" << msg.receiver_id;
+                qCDebug(lcChatWindow) << "Allow auto-accept for loopback received message" << message_id;
                 break;
             }
         }
     }
     
     if ((transfer.is_outgoing || transfer.accepted) && !should_allow_auto_accept) {
-        qCDebug(lcChatWindow) << "Skip auto-accept; already outbound or accepted"
-                              << message_id
-                              << "outgoing:" << transfer.is_outgoing
-                              << "accepted:" << transfer.accepted
-                              << "allow_override:" << should_allow_auto_accept;
+        qCDebug(lcChatWindow) << "Skip auto-accept; already outbound or accepted" << message_id;
         return;
     }
     if (transfer.packet_no == 0 || transfer.file_id == 0) {
@@ -1796,12 +1742,6 @@ void ChatWindow::maybeAutoAcceptImageTransfer(const QString& message_id)
     transfer.accepted = true;
     transfer.saved_path = save_path;
     m_pending_transfers.insert(message_id, transfer);
-
-    qCDebug(lcChatWindow) << "Auto-accept issued"
-                          << message_id
-                          << "packet:" << transfer.packet_no
-                          << "file:" << transfer.file_id
-                          << "save_path:" << save_path;
 
     updateMessageMetadata(message_id,
                           {{QStringLiteral("transfer_status"), QStringLiteral("in_progress")},
@@ -2053,14 +1993,6 @@ void ChatWindow::registerFileTransfer(const ChatMessage& message)
     }
 
     m_pending_transfers.insert(message.message_id, transfer);
-
-    qCDebug(lcChatWindow) << "Registered file transfer"
-                          << message.message_id
-                          << "outgoing:" << transfer.is_outgoing
-                          << "packet:" << transfer.packet_no
-                          << "file:" << transfer.file_id
-                          << "accepted:" << transfer.accepted
-                          << "completed:" << transfer.completed;
 
     if (transfer.packet_no != 0 && transfer.file_id != 0) {
         const quint64 key = transferKey(transfer.packet_no, transfer.file_id);

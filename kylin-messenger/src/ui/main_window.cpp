@@ -43,8 +43,6 @@ MainWindow::MainWindow(Core::MicroKernel* micro_kernel, QWidget* parent)
     , m_micro_kernel(micro_kernel)
     , m_use_event_driven(micro_kernel != nullptr)
     , m_network_manager(nullptr)
-    , m_lightweight_discovery(nullptr)
-    , m_concurrent_transfer(nullptr)
     , m_stacked_widget(nullptr)
     , m_user_list_page(nullptr)
     , m_contact_list_page(nullptr)
@@ -96,17 +94,7 @@ MainWindow::MainWindow(Core::MicroKernel* micro_kernel, QWidget* parent)
     qInfo() << "[MainWindow] 开始 ensureLoopbackEntry()";
     ensureLoopbackEntry();
     qInfo() << "[MainWindow] ensureLoopbackEntry() 完成";
-
-    // 注册微内核事件监听器（如果使用事件驱动模式）
-    if (m_use_event_driven && m_micro_kernel) {
-        qInfo() << "[MainWindow] 注册微内核事件监听器";
-        // 订阅微内核事件
-        // 注意：这里需要微内核支持事件订阅机制
-        // 暂时通过直接连接的方式实现
-        connect(this, &MainWindow::onMicroKernelEvent,
-                this, &MainWindow::onMicroKernelEvent);
-    }
-
+    
     setWindowTitle("麒麟信使 - Kylin Messenger");
     resize(300, 600);
     qInfo() << "[MainWindow] 构造函数完成";
@@ -283,51 +271,67 @@ void MainWindow::setComplianceService(std::shared_ptr<IComplianceService> compli
 
 void MainWindow::setLightweightDiscovery(std::shared_ptr<Network::LightweightDiscovery> discovery)
 {
-    qInfo() << "[MainWindow::setLightweightDiscovery] 设置轻量级网络发现服务";
-    m_lightweight_discovery = discovery;
-
-    if (m_use_event_driven && m_micro_kernel) {
-        qInfo() << "[MainWindow::setLightweightDiscovery] 注册事件监听器";
-        // 连接网络发现的事件信号
-        connect(m_lightweight_discovery.get(), &Network::LightweightDiscovery::userOnline,
-                this, &MainWindow::onUserOnline);
-        connect(m_lightweight_discovery.get(), &Network::LightweightDiscovery::userOffline,
-                this, &MainWindow::onUserOffline);
-        connect(m_lightweight_discovery.get(), &Network::LightweightDiscovery::userInfoUpdated,
-                this, &MainWindow::onUserInfoUpdated);
+    if (m_lightweight_discovery == discovery) {
+        return;
     }
+
+    if (m_lightweight_discovery) {
+        disconnect(m_lightweight_discovery.get(), nullptr, this, nullptr);
+    }
+
+    m_lightweight_discovery = std::move(discovery);
+    if (!m_lightweight_discovery) {
+        return;
+    }
+
+    connect(m_lightweight_discovery.get(),
+            &Network::LightweightDiscovery::userOnline,
+            this,
+            &MainWindow::onUserOnline);
+    connect(m_lightweight_discovery.get(),
+            &Network::LightweightDiscovery::userOffline,
+            this,
+            &MainWindow::onUserOffline);
+    connect(m_lightweight_discovery.get(),
+            &Network::LightweightDiscovery::userInfoUpdated,
+            this,
+            &MainWindow::onUserInfoUpdated);
+    connect(m_lightweight_discovery.get(),
+            &Network::LightweightDiscovery::networkError,
+            this,
+            [](const QString& error) {
+                qWarning() << "[MainWindow] LightweightDiscovery error:" << error;
+            });
 }
 
 void MainWindow::setConcurrentFileTransfer(std::shared_ptr<Transfer::ConcurrentFileTransfer> transfer)
 {
-    qInfo() << "[MainWindow::setConcurrentFileTransfer] 设置并发文件传输服务";
-    m_concurrent_transfer = transfer;
-
-    if (m_use_event_driven && m_micro_kernel) {
-        qInfo() << "[MainWindow::setConcurrentFileTransfer] 注册文件传输事件监听器";
-        // 连接文件传输的事件信号
-        connect(m_concurrent_transfer.get(), &Transfer::ConcurrentFileTransfer::transferProgress,
-                this, &MainWindow::onFileTransferProgress);
-        connect(m_concurrent_transfer.get(), &Transfer::ConcurrentFileTransfer::transferCompleted,
-                this, &MainWindow::onFileTransferCompleted);
-        connect(m_concurrent_transfer.get(), &Transfer::ConcurrentFileTransfer::transferFailed,
-                this, &MainWindow::onFileTransferFailed);
+    if (m_concurrent_transfer == transfer) {
+        return;
     }
-}
 
-#ifdef ENABLE_AI_FEATURES
-void MainWindow::setNSFWDetector(std::shared_ptr<AI::LightweightNSFWDetector> detector)
-{
-    qInfo() << "[MainWindow::setNSFWDetector] 设置NSFW检测器";
-    m_opencv_nsfw_detector = detector;
-
-    if (m_compliance_service) {
-        // 将NSFW检测器集成到合规服务中
-        qInfo() << "[MainWindow::setNSFWDetector] NSFW检测器已连接到合规服务";
-        // 这里可以添加将NSFW检测器绑定到合规逻辑的实现
+    if (m_concurrent_transfer) {
+        disconnect(m_concurrent_transfer.get(), nullptr, this, nullptr);
     }
+
+    m_concurrent_transfer = std::move(transfer);
+    if (!m_concurrent_transfer) {
+        return;
+    }
+
+    connect(m_concurrent_transfer.get(),
+            &Transfer::ConcurrentFileTransfer::transferProgress,
+            this,
+            &MainWindow::onFileTransferProgress);
+    connect(m_concurrent_transfer.get(),
+            &Transfer::ConcurrentFileTransfer::transferCompleted,
+            this,
+            &MainWindow::onFileTransferCompleted);
+    connect(m_concurrent_transfer.get(),
+            &Transfer::ConcurrentFileTransfer::transferFailed,
+            this,
+            &MainWindow::onFileTransferFailed);
 }
-#endif
 
 // ============================================================================
 // UI设置
@@ -428,7 +432,7 @@ void MainWindow::setupUI()
     m_user_context_menu->addAction("发送文件", this, &MainWindow::onSendFile);
     m_user_context_menu->addSeparator();
     m_view_info_action = m_user_context_menu->addAction("查看信息", this, &MainWindow::onViewUserInfo);
-    // m_user_context_menu->addAction("添加到联系人", this, &MainWindow::onAddContactFromContext);
+    m_user_context_menu->addAction("添加到联系人", this, &MainWindow::onAddContactFromContext);
     
     qInfo() << "[MainWindow::setupUI] 完成";
 }
@@ -671,9 +675,7 @@ void MainWindow::onMessageReceived(const Core::ChatMessage& message)
 
 void MainWindow::showUserContextMenu(const QPoint& pos, const Core::UserInfo& user_info)
 {
-    // temporary fix: store user_id only
-    const QString user_id = user_info.user_id;
-    Q_UNUSED(user_id);
+    m_context_user_info = user_info;
     m_user_context_menu->exec(pos);
 }
 
@@ -686,34 +688,45 @@ void MainWindow::onPageChanged(int index)
 
 void MainWindow::onViewUserInfo()
 {
-    // temporary fix: use selected user from current list view
-    Core::UserInfo selected_user;
-    bool has_selection = false;
-
-    if (m_user_list_page) {
-        // UserListPage does not have getSelectedUser method
-        // For now, use selected item from current context
-        selected_user = m_context_user_info;  // Use stored context if available
-        has_selection = !selected_user.user_id.isEmpty();
-    }
-
-    if (!has_selection) {
+    if (m_context_user_info.user_id.isEmpty()) {
         QMessageBox::information(this, "提示", "请从用户列表选择用户再查看信息");
         return;
     }
-
     QMap<QString, QString> details;
     if (m_network_manager) {
-        details = m_network_manager->getUserDetails(selected_user.user_id);
+        details = m_network_manager->getUserDetails(m_context_user_info.user_id);
     }
-    showUserInfoDialog(selected_user, details);
+    showUserInfoDialog(m_context_user_info, details);
 }
 
-// Implementation temporarily commented out due to missing getSelectedUser method
-// Original function body preserved in WORK_IN_PROGRESS.md for future reference
 void MainWindow::onAddContactFromContext()
 {
-    QMessageBox::information(this, "提示", "添加联系人功能暂不可用");
+    if (!m_contact_repository) {
+        QMessageBox::warning(this, "提示", "联系人仓库未初始化");
+        return;
+    }
+    if (m_context_user_info.user_id.isEmpty()) {
+        QMessageBox::information(this, "提示", "请从用户列表选择用户");
+        return;
+    }
+    Core::ContactInfo c;
+    c.contact_id = m_context_user_info.user_id;
+    c.display_name = userDisplayName(m_context_user_info);
+    c.username = m_context_user_info.username;
+    c.hostname = m_context_user_info.hostname;
+    c.ip_address = m_context_user_info.ip_address;
+    c.group_name = m_context_user_info.group_name;
+    c.notes = QString();
+    c.created_at = QDateTime::currentDateTime();
+    c.last_seen = QDateTime::currentDateTime();
+    if (m_contact_repository->saveContact(c)) {
+        QMessageBox::information(this, "成功", QStringLiteral("已将 %1 添加到联系人").arg(c.display_name));
+        if (m_contact_list_page) {
+            m_contact_list_page->refreshContactList();
+        }
+    } else {
+        QMessageBox::warning(this, "失败", "保存联系人失败");
+    }
 }
 
 void MainWindow::onSearchTextChanged(const QString& text)
@@ -1086,19 +1099,12 @@ void MainWindow::closeEvent(QCloseEvent* event)
     if (m_tray_icon && m_tray_icon->isVisible()) {
         hide();
         event->ignore();
-
+        
         m_tray_icon->showMessage("麒麟信使",
                                  "应用已最小化到系统托盘",
                                  QSystemTrayIcon::Information,
                                  2000);
     } else {
-        // 发布关闭事件（如果使用事件驱动模式）
-        if (m_use_event_driven && m_micro_kernel) {
-            qInfo() << "[MainWindow] 发布关闭事件";
-            Core::Event shutdown_event(Core::Event::ShutdownRequested);
-            m_micro_kernel->publishEvent(shutdown_event);
-        }
-
         event->accept();
     }
 }
@@ -1341,7 +1347,7 @@ void MainWindow::onGroupMessageReceived(const QString& group_id, const Core::Cha
     // 查找或创建群组聊天窗口
     QString group_key = QStringLiteral("group:%1").arg(group_id);
     ChatWindow* chat_window = findChatWindow(group_key);
-
+    
     if (!chat_window) {
         // 从群组列表获取群组信息
         Core::GroupInfo group_info;
@@ -1352,7 +1358,7 @@ void MainWindow::onGroupMessageReceived(const QString& group_id, const Core::Cha
             group_info.group_id = group_id;
             group_info.group_name = group_id;  // 默认使用ID作为名称
         }
-
+        
         if (!group_info.group_id.isEmpty()) {
             chat_window = openGroupChatWindow(group_info, false);
         } else {
@@ -1362,7 +1368,7 @@ void MainWindow::onGroupMessageReceived(const QString& group_id, const Core::Cha
             chat_window = openGroupChatWindow(group_info, false);
         }
     }
-
+    
     if (chat_window) {
         bool wasActive = chat_window->isActiveWindow();
         chat_window->addReceivedMessage(message);
@@ -1370,73 +1376,12 @@ void MainWindow::onGroupMessageReceived(const QString& group_id, const Core::Cha
         if (!wasActive) {
             incrementUnread(group_key);
             QString display_name = QStringLiteral("群组: %1").arg(group_id);
-
+            
             showNotification(QStringLiteral("群组消息"),
                              QStringLiteral("来自 %1: %2")
                                  .arg(message.sender_id, message.content.left(50)));
         }
     }
-}
-
-// ============================================================================
-// 事件驱动处理（微内核架构）
-// ============================================================================
-
-void MainWindow::onMicroKernelEvent(const Core::Event& event)
-{
-    qDebug() << "[MainWindow::onMicroKernelEvent] 收到事件:" << event.type();
-
-    switch (event.type()) {
-        case Core::Event::ServiceStarted:
-            qInfo() << "[MainWindow] 服务已启动:";
-            break;
-        case Core::Event::ServiceStopped:
-            qInfo() << "[MainWindow] 服务已停止:";
-            break;
-        case Core::Event::ShutdownRequested:
-            qInfo() << "[MainWindow] 收到关闭请求";
-            close();
-            break;
-        default:
-            break;
-    }
-}
-
-void MainWindow::onFileTransferProgress(const QString& task_id, qint64 transferred, qint64 total)
-{
-    if (total <= 0) return;
-
-    const int percent = static_cast<int>((transferred * 100) / total);
-    const QString speed_text = QString("%1 MB/s").arg(
-        (transferred / 1024.0 / 1024.0), 0, 'f', 2);
-
-    statusBar()->showMessage(
-        QStringLiteral("传输进度 [%1]: %2% (%3)")
-            .arg(task_id.left(8))
-            .arg(percent)
-            .arg(speed_text), 2000);
-}
-
-void MainWindow::onFileTransferCompleted(const QString& task_id)
-{
-    qInfo() << "[MainWindow] 文件传输完成:" << task_id;
-    statusBar()->showMessage(
-        QStringLiteral("传输完成 [%1]").arg(task_id.left(8)), 3000);
-
-    showNotification(QStringLiteral("传输完成"),
-                    QStringLiteral("文件传输任务 %1 已完成")
-                        .arg(task_id.left(8)));
-}
-
-void MainWindow::onFileTransferFailed(const QString& task_id, const QString& error)
-{
-    qWarning() << "[MainWindow] 文件传输失败:" << task_id << error;
-    statusBar()->showMessage(
-        QStringLiteral("传输失败 [%1]: %2").arg(task_id.left(8), error), 5000);
-
-    showNotification(QStringLiteral("传输失败"),
-                    QStringLiteral("文件传输任务 %1 失败: %2")
-                        .arg(task_id.left(8), error));
 }
 
 ChatWindow* MainWindow::findChatWindow(const QString& user_id)
@@ -1659,6 +1604,44 @@ QIcon MainWindow::actionIcon(const QString& name) const
         return icon;
     }
     return style()->standardIcon(QStyle::SP_FileIcon);
+}
+
+void MainWindow::onFileTransferProgress(const QString& task_id, qint64 transferred, qint64 total)
+{
+    const int percent = total > 0 ? static_cast<int>((transferred * 100) / total) : 0;
+    statusBar()->showMessage(
+        QStringLiteral("任务 %1 正在传输 (%2%)").arg(task_id, QString::number(percent)),
+        3000);
+    qInfo() << "[MainWindow] Transfer" << task_id << "progress"
+            << transferred << "/" << total << "(" << percent << "%)";
+}
+
+void MainWindow::onFileTransferCompleted(const QString& task_id)
+{
+    statusBar()->showMessage(
+        QStringLiteral("任务 %1 已完成").arg(task_id),
+        5000);
+    qInfo() << "[MainWindow] Transfer" << task_id << "completed";
+}
+
+void MainWindow::onFileTransferFailed(const QString& task_id, const QString& error)
+{
+    statusBar()->showMessage(
+        QStringLiteral("任务 %1 失败: %2").arg(task_id, error),
+        5000);
+    QMessageBox::warning(this,
+                         QStringLiteral("文件传输失败"),
+                         error.isEmpty() ? QStringLiteral("传输失败，未知错误") : error);
+    qWarning() << "[MainWindow] Transfer" << task_id << "failed:" << error;
+}
+
+void MainWindow::onMicroKernelEvent(const Core::Event& event)
+{
+    if (!m_use_event_driven) {
+        return;
+    }
+
+    qInfo() << "[MainWindow] MicroKernel event received:" << event.type();
 }
 
 void MainWindow::applyTheme(const QString& theme, bool silent)

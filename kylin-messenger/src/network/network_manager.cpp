@@ -357,7 +357,9 @@ bool NetworkManager::acceptFile(const QString& sender_id,
         return false;
     }
 
-    const quint16 port = Network::kUdpDiscoveryPort;  /* temporary fix: use discovery port since sender_port is not found */
+    // File transfers rely on the sender's dedicated TCP listener (default 2426).
+    // Using the UDP discovery port caused receivers to hit a closed socket and drop the transfer.
+    const quint16 port = Network::kTcpListenPort;
 
     qCInfo(lcIpmsg) << "ACCEPT FILE"
                     << "packet" << packet_no
@@ -1327,26 +1329,28 @@ void NetworkManager::processPendingSend(QTcpSocket* socket)
     auto listIt = m_pending_send_transfers.find(ipKey);
     // If there's no direct match by peerAddress string, try a relaxed search.
     if (listIt == m_pending_send_transfers.end() || listIt->isEmpty()) {
-        // Fallback: the stored pending entry might be keyed by a different local
-        // address (e.g. host IP) while the incoming TCP connection shows as
-        // loopback (127.0.0.1 ::1) or vice versa. Try to find a candidate by
-        // comparing stored peer_address values.
-        const QString peerStr = socket->peerAddress().toString();
+        // Fallback matching that tolerates IPv4/IPv6 formatting differences and
+        // IPv4-mapped IPv6 addresses. Prefer exact match then try numeric IPv4
+        // equality and loopback equivalence.
+        const QHostAddress sockAddr = socket->peerAddress();
+        const QString peerStr = sockAddr.toString();
+        auto addressesMatch = [](const QHostAddress& a, const QHostAddress& b) -> bool {
+            if (a == b) return true;
+            // Compare IPv4 numeric when possible
+            quint32 a4 = a.toIPv4Address();
+            quint32 b4 = b.toIPv4Address();
+            if (a4 != 0 && b4 != 0 && a4 == b4) return true;
+            // Both loopback
+            if (a.isLoopback() && b.isLoopback()) return true;
+            return false;
+        };
+
         bool found = false;
         for (auto it = m_pending_send_transfers.begin(); it != m_pending_send_transfers.end(); ++it) {
             if (it->isEmpty()) continue;
             const PendingSendTransfer& candidate = it->first();
-            const QString candAddr = candidate.file.peer_address.toString();
-            // Exact match
-            if (candAddr == peerStr) {
-                listIt = it;
-                found = true;
-                break;
-            }
-            // Both loopback addresses (127.0.0.1 ::1)
             QHostAddress candHost(candidate.file.peer_address);
-            QHostAddress sockHost(socket->peerAddress());
-            if (candHost.isLoopback() && sockHost.isLoopback()) {
+            if (addressesMatch(candHost, sockAddr)) {
                 listIt = it;
                 found = true;
                 break;
@@ -1355,6 +1359,13 @@ void NetworkManager::processPendingSend(QTcpSocket* socket)
 
         if (!found) {
             qCWarning(lcIpmsg) << "No pending file transfer for" << ipKey << "or fallback candidates";
+            // Log current pending keys for diagnosis
+            for (auto it2 = m_pending_send_transfers.cbegin(); it2 != m_pending_send_transfers.cend(); ++it2) {
+                if (it2->isEmpty()) continue;
+                const PendingSendTransfer& cand = it2->first();
+                qCWarning(lcIpmsg) << " pending candidate:" << cand.file.peer_id << cand.file.peer_address.toString()
+                                   << "packet" << cand.file.packet_no << "file" << cand.file.file_id;
+            }
             socket->close();
             socket->deleteLater();
             return;
@@ -1684,9 +1695,15 @@ void NetworkManager::setupFileServer()
         return;
     }
 
-    // 监听 TCP 端口（与 UDP 发现端口区分）
-    if (!m_file_server->listen(QHostAddress::AnyIPv4, Network::kTcpListenPort)) {
-        qCWarning(lcIpmsg) << "Failed to start file server:" << m_file_server->errorString();
+    // 监听 TCP 端口（同时接受 IPv4/IPv6 连接，兼容 IPv4-mapped IPv6 地址）
+    if (!m_file_server->listen(QHostAddress::Any, Network::kTcpListenPort)) {
+        qCWarning(lcIpmsg) << "Failed to start file server (Any):" << m_file_server->errorString();
+        // Fallback: try IPv4 only and log the result for diagnosis
+        if (!m_file_server->listen(QHostAddress::AnyIPv4, Network::kTcpListenPort)) {
+            qCWarning(lcIpmsg) << "Failed to start file server (AnyIPv4):" << m_file_server->errorString();
+        } else {
+            qCInfo(lcIpmsg) << "File server listening on TCP port (AnyIPv4 fallback)" << m_file_server->serverPort();
+        }
     } else {
         qCInfo(lcIpmsg) << "File server listening on TCP port" << m_file_server->serverPort();
     }
@@ -1946,6 +1963,15 @@ bool NetworkManager::isLocalPacket(const Network::IPMSG::Packet& packet,
                                    const QHostAddress& sender) const
 {
     const QString sender_ip = sender.toString();
+    const bool sameIdentity = (packet.sender_name == m_local_user.username) &&
+                              (m_local_user.hostname.isEmpty() ||
+                               packet.sender_host.compare(m_local_user.hostname, Qt::CaseInsensitive) == 0);
+
+    if (sameIdentity && sender_ip == m_local_user.ip_address) {
+        qCDebug(lcIpmsg) << "Packet matches local identity and IP" << sender_ip;
+        return true;
+    }
+
     if (m_loopback_addresses.contains(sender_ip)) {
         if (!packet.hasOption(Network::IPMSG::BROADCASTOPT)) {
             qCDebug(lcIpmsg) << "Packet from registered loopback peer" << sender_ip
@@ -1954,12 +1980,7 @@ bool NetworkManager::isLocalPacket(const Network::IPMSG::Packet& packet,
         }
     }
 
-    if (packet.sender_name != m_local_user.username) {
-        return false;
-    }
-
-    if (!m_local_user.hostname.isEmpty() &&
-        packet.sender_host.compare(m_local_user.hostname, Qt::CaseInsensitive) != 0) {
+    if (!sameIdentity) {
         return false;
     }
 

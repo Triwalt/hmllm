@@ -24,7 +24,7 @@ option(ENABLE_NSFW "Enable NSFW compliance service" OFF)
 # 仅使用 IPMSG 协议，不启用自定义二进制协议与 ProtoBuf
 
 # 查找Qt：优先 Qt6，若不可用则回退 Qt5（便于 Ubuntu 20.04 开发调试）
-set(QT_REQUIRED_COMPONENTS Core Widgets Network Gui)
+set(QT_REQUIRED_COMPONENTS Core Widgets Network Gui Qml Quick QuickControls2)
 set(HAVE_QT_WEBSOCKETS FALSE)
 
 find_package(Qt6 COMPONENTS ${QT_REQUIRED_COMPONENTS})
@@ -115,9 +115,17 @@ set(CORE_SOURCES
     src/ui/contact_list_page.cpp
     src/ui/group_list_page.cpp
     src/ui/file_transfer_dialog.cpp
+    src/ui/modern_style.cpp
+    src/ui/quick/quick_app_host.cpp
+    src/ui/quick/quick_user_list_model.cpp
+    src/ui/quick/quick_message_list_model.cpp
+    src/ui/quick/quick_contact_list_model.cpp
+    src/ui/quick/quick_group_list_model.cpp
+    src/ui/quick/quick_conversation_list_model.cpp
     resources/icons/icons.qrc
     resources/emojis/emojis.qrc
     resources/qss/themes.qrc
+    resources/qml/qml.qrc
 )
 
 # 头文件
@@ -148,6 +156,13 @@ set(HEADERS
     include/ui/contact_list_page.h
     include/ui/group_list_page.h
     include/ui/file_transfer_dialog.h
+    include/ui/modern_style.h
+    include/ui/quick_app_host.h
+    include/ui/quick_user_list_model.h
+    include/ui/quick_message_list_model.h
+    include/ui/quick_contact_list_model.h
+    include/ui/quick_group_list_model.h
+    include/ui/quick_conversation_list_model.h
 )
 
 # 网关客户端功能依赖自定义协议/封装，现阶段不编译
@@ -172,6 +187,9 @@ target_link_libraries(${PROJECT_NAME}-core
     ${QT_PACKAGE_PREFIX}::Widgets
     ${QT_PACKAGE_PREFIX}::Network
     ${QT_PACKAGE_PREFIX}::Gui
+    ${QT_PACKAGE_PREFIX}::Qml
+    ${QT_PACKAGE_PREFIX}::Quick
+    ${QT_PACKAGE_PREFIX}::QuickControls2
     ZLIB::ZLIB
     Threads::Threads
 )
@@ -202,44 +220,24 @@ if(ENABLE_AI_FEATURES)
     endif()
 
     if(ENABLE_NSFW)
-        # 仅在启用 NSFW 时选择一种合规实现进行编译
-        set(_kylin_use_rknn_impl FALSE)
+        target_sources(${PROJECT_NAME}-core PRIVATE
+            src/services/nsfw_compliance_service.cpp
+        )
+        message(STATUS "启用内置 NSFW 合规实现")
+
         if(_kylin_enable_rknn_search)
-            # 可选: 查找RKNN运行时
             find_library(RKNN_RT_LIB rknnrt HINTS /usr/lib)
             if(RKNN_RT_LIB)
                 message(STATUS "找到RKNN运行时: ${RKNN_RT_LIB}")
                 target_link_libraries(${PROJECT_NAME}-core PRIVATE ${RKNN_RT_LIB})
                 target_compile_definitions(${PROJECT_NAME}-core PRIVATE HAVE_RKNN_RT)
-                set(_kylin_use_rknn_impl TRUE)
+                target_sources(${PROJECT_NAME}-core PRIVATE
+                    src/services/rknn_nsfw_compliance_service.cpp
+                )
+                message(STATUS "启用 RKNN NSFW 合规实现")
             else()
-                message(WARNING "未找到RKNN运行时库，AI功能可能受限")
+                message(WARNING "未找到RKNN运行时库，RKNN 后端将不可用")
             endif()
-
-            # 可选: 查找libllm-rknn
-            find_library(LLM_RKNN_LIB llm-rknn HINTS /usr/lib /usr/local/lib)
-            if(LLM_RKNN_LIB)
-                message(STATUS "找到libllm-rknn: ${LLM_RKNN_LIB}")
-                target_link_libraries(${PROJECT_NAME}-core PRIVATE ${LLM_RKNN_LIB})
-                target_compile_definitions(${PROJECT_NAME}-core PRIVATE HAVE_LLM_RKNN)
-                set(_kylin_use_rknn_impl TRUE)
-            else()
-                message(WARNING "未找到libllm-rknn，LLM功能将不可用")
-            endif()
-        endif()
-
-        if(_kylin_use_rknn_impl)
-            target_sources(${PROJECT_NAME}-core PRIVATE
-                src/services/rknn_nsfw_compliance_service.cpp
-            )
-            message(STATUS "启用 RKNN NSFW 合规实现")
-        else()
-            # 默认启用 Python/外部进程版 NSFW 实现
-            target_sources(${PROJECT_NAME}-core PRIVATE
-                src/services/nsfw_compliance_service.cpp
-                resources/scripts/scripts.qrc
-            )
-            message(STATUS "启用 Python NSFW 合规实现")
         endif()
     else()
         message(STATUS "NSFW 合规服务已禁用（使用占位合规实现）")

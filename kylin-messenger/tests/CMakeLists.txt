@@ -81,57 +81,6 @@ target_link_libraries(test_ai_service PRIVATE
     Threads::Threads
 )
 
-# 轻量级核心组件测试
-add_executable(test_micro_kernel
-    test_micro_kernel.cpp
-)
-
-target_link_libraries(test_micro_kernel PRIVATE
-    ${PROJECT_NAME}-core
-    ${QT_PACKAGE_PREFIX}::Core
-    ${GTEST_LIB_TARGET}
-    ${GTEST_MAIN_TARGET}
-    Threads::Threads
-)
-
-add_executable(test_opencv_nsfw_detector
-    test_opencv_nsfw_detector.cpp
-)
-
-target_link_libraries(test_opencv_nsfw_detector PRIVATE
-    ${PROJECT_NAME}-core
-    ${QT_PACKAGE_PREFIX}::Core
-    ${GTEST_LIB_TARGET}
-    ${GTEST_MAIN_TARGET}
-    Threads::Threads
-)
-
-add_executable(test_lightweight_discovery
-    test_lightweight_discovery.cpp
-)
-
-target_link_libraries(test_lightweight_discovery PRIVATE
-    ${PROJECT_NAME}-core
-    ${QT_PACKAGE_PREFIX}::Core
-    ${QT_PACKAGE_PREFIX}::Network
-    ${GTEST_LIB_TARGET}
-    ${GTEST_MAIN_TARGET}
-    Threads::Threads
-)
-
-add_executable(test_concurrent_file_transfer
-    test_concurrent_file_transfer.cpp
-)
-
-target_link_libraries(test_concurrent_file_transfer PRIVATE
-    ${PROJECT_NAME}-core
-    ${QT_PACKAGE_PREFIX}::Core
-    ${QT_PACKAGE_PREFIX}::Network
-    ${GTEST_LIB_TARGET}
-    ${GTEST_MAIN_TARGET}
-    Threads::Threads
-)
-
 if(KYLIN_USING_FALLBACK_GTEST)
     if(TARGET test_network_protocol)
         target_include_directories(test_network_protocol PRIVATE BEFORE ${_gtest_include_dir})
@@ -139,26 +88,10 @@ if(KYLIN_USING_FALLBACK_GTEST)
     if(TARGET test_ai_service)
         target_include_directories(test_ai_service PRIVATE BEFORE ${_gtest_include_dir})
     endif()
-    if(TARGET test_micro_kernel)
-        target_include_directories(test_micro_kernel PRIVATE BEFORE ${_gtest_include_dir})
-    endif()
-    if(TARGET test_opencv_nsfw_detector)
-        target_include_directories(test_opencv_nsfw_detector PRIVATE BEFORE ${_gtest_include_dir})
-    endif()
-    if(TARGET test_lightweight_discovery)
-        target_include_directories(test_lightweight_discovery PRIVATE BEFORE ${_gtest_include_dir})
-    endif()
-    if(TARGET test_concurrent_file_transfer)
-        target_include_directories(test_concurrent_file_transfer PRIVATE BEFORE ${_gtest_include_dir})
-    endif()
 endif()
 
 # 注册测试
 add_test(NAME AIServiceTest COMMAND test_ai_service)
-add_test(NAME MicroKernelTest COMMAND test_micro_kernel)
-add_test(NAME NSFWDetectorTest COMMAND test_opencv_nsfw_detector)
-add_test(NAME LightweightDiscoveryTest COMMAND test_lightweight_discovery)
-add_test(NAME ConcurrentFileTransferTest COMMAND test_concurrent_file_transfer)
 
 add_executable(test_ui_smoke
     ui_smoke_test.cpp

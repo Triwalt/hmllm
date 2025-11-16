@@ -364,6 +364,12 @@ Qt5Widgets_DIR:PATH=D:/Anaconda/Library/lib/cmake/Qt5Widgets
 //The directory containing a CMake configuration file for Qt5.
 Qt5_DIR:PATH=D:/Anaconda/Library/lib/cmake/Qt5
 
+//The directory containing a CMake configuration file for Qt6ConcurrentPrivate.
+Qt6ConcurrentPrivate_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6ConcurrentPrivate
+
+//The directory containing a CMake configuration file for Qt6Concurrent.
+Qt6Concurrent_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6Concurrent
+
 //The directory containing a CMake configuration file for Qt6CorePrivate.
 Qt6CorePrivate_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6CorePrivate
 
@@ -375,6 +381,9 @@ Qt6Core_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6Core
 
 //The directory containing a CMake configuration file for Qt6EntryPointPrivate.
 Qt6EntryPointPrivate_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6EntryPointPrivate
+
+//The directory containing a CMake configuration file for Qt6ExamplesAssetDownloaderPrivate.
+Qt6ExamplesAssetDownloaderPrivate_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6ExamplesAssetDownloaderPrivate
 
 //The directory containing a CMake configuration file for Qt6GuiPrivate.
 Qt6GuiPrivate_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6GuiPrivate
@@ -390,6 +399,75 @@ Qt6NetworkPrivate_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6NetworkPrivate
 
 //The directory containing a CMake configuration file for Qt6Network.
 Qt6Network_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6Network
+
+//The directory containing a CMake configuration file for Qt6OpenGLPrivate.
+Qt6OpenGLPrivate_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6OpenGLPrivate
+
+//The directory containing a CMake configuration file for Qt6OpenGL.
+Qt6OpenGL_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6OpenGL
+
+//The directory containing a CMake configuration file for Qt6QmlAssetDownloaderPrivate.
+Qt6QmlAssetDownloaderPrivate_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6QmlAssetDownloaderPrivate
+
+//The directory containing a CMake configuration file for Qt6QmlAssetDownloader.
+Qt6QmlAssetDownloader_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6QmlAssetDownloader
+
+//The directory containing a CMake configuration file for Qt6QmlCompilerPlusPrivateTools.
+Qt6QmlCompilerPlusPrivateTools_DIR:PATH=Qt6QmlCompilerPlusPrivateTools_DIR-NOTFOUND
+
+//The directory containing a CMake configuration file for Qt6QmlIntegrationPrivate.
+Qt6QmlIntegrationPrivate_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6QmlIntegrationPrivate
+
+//The directory containing a CMake configuration file for Qt6QmlIntegration.
+Qt6QmlIntegration_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6QmlIntegration
+
+//The directory containing a CMake configuration file for Qt6QmlMetaPrivate.
+Qt6QmlMetaPrivate_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6QmlMetaPrivate
+
+//The directory containing a CMake configuration file for Qt6QmlMeta.
+Qt6QmlMeta_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6QmlMeta
+
+//The directory containing a CMake configuration file for Qt6QmlModelsPrivate.
+Qt6QmlModelsPrivate_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6QmlModelsPrivate
+
+//The directory containing a CMake configuration file for Qt6QmlModels.
+Qt6QmlModels_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6QmlModels
+
+//The directory containing a CMake configuration file for Qt6QmlPrivate.
+Qt6QmlPrivate_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6QmlPrivate
+
+//The directory containing a CMake configuration file for Qt6QmlTools.
+Qt6QmlTools_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6QmlTools
+
+//The directory containing a CMake configuration file for Qt6QmlWorkerScriptPrivate.
+Qt6QmlWorkerScriptPrivate_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6QmlWorkerScriptPrivate
+
+//The directory containing a CMake configuration file for Qt6QmlWorkerScript.
+Qt6QmlWorkerScript_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6QmlWorkerScript
+
+//The directory containing a CMake configuration file for Qt6Qml.
+Qt6Qml_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6Qml
+
+//The directory containing a CMake configuration file for Qt6QuickControls2Private.
+Qt6QuickControls2Private_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6QuickControls2Private
+
+//The directory containing a CMake configuration file for Qt6QuickControls2.
+Qt6QuickControls2_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6QuickControls2
+
+//The directory containing a CMake configuration file for Qt6QuickPrivate.
+Qt6QuickPrivate_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6QuickPrivate
+
+//The directory containing a CMake configuration file for Qt6QuickTemplates2Private.
+Qt6QuickTemplates2Private_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6QuickTemplates2Private
+
+//The directory containing a CMake configuration file for Qt6QuickTemplates2.
+Qt6QuickTemplates2_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6QuickTemplates2
+
+//The directory containing a CMake configuration file for Qt6QuickTools.
+Qt6QuickTools_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6QuickTools
+
+//The directory containing a CMake configuration file for Qt6Quick.
+Qt6Quick_DIR:PATH=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6Quick
 
 //The directory containing a CMake configuration file for Qt6WebSockets.
 Qt6WebSockets_DIR:PATH=Qt6WebSockets_DIR-NOTFOUND
@@ -1177,12 +1255,113 @@ QT_FEATURE_publicsuffix_qt:INTERNAL=ON
 QT_FEATURE_publicsuffix_system:INTERNAL=OFF
 //Qt feature: pushbutton (from target Qt6::Widgets)
 QT_FEATURE_pushbutton:INTERNAL=ON
+//Qt feature: qml_animation (from target Qt6::Qml)
+QT_FEATURE_qml_animation:INTERNAL=ON
+//Qt feature: qml_debug (from target Qt6::Qml)
+QT_FEATURE_qml_debug:INTERNAL=ON
+//Qt feature: qml_delegate_model (from target Qt6::QmlModels)
+QT_FEATURE_qml_delegate_model:INTERNAL=ON
+//Qt feature: qml_itemmodel (from target Qt6::Qml)
+QT_FEATURE_qml_itemmodel:INTERNAL=ON
+//Qt feature: qml_jit (from target Qt6::Qml)
+QT_FEATURE_qml_jit:INTERNAL=ON
+//Qt feature: qml_list_model (from target Qt6::QmlModels)
+QT_FEATURE_qml_list_model:INTERNAL=ON
+//Qt feature: qml_locale (from target Qt6::Qml)
+QT_FEATURE_qml_locale:INTERNAL=ON
+//Qt feature: qml_network (from target Qt6::Qml)
+QT_FEATURE_qml_network:INTERNAL=ON
+//Qt feature: qml_object_model (from target Qt6::QmlModels)
+QT_FEATURE_qml_object_model:INTERNAL=ON
+//Qt feature: qml_preview (from target Qt6::Qml)
+QT_FEATURE_qml_preview:INTERNAL=ON
+//Qt feature: qml_profiler (from target Qt6::Qml)
+QT_FEATURE_qml_profiler:INTERNAL=ON
+//Qt feature: qml_python (from target Qt6::Qml)
+QT_FEATURE_qml_python:INTERNAL=ON
+//Qt feature: qml_ssl (from target Qt6::Qml)
+QT_FEATURE_qml_ssl:INTERNAL=ON
+//Qt feature: qml_table_model (from target Qt6::QmlModels)
+QT_FEATURE_qml_table_model:INTERNAL=ON
+//Qt feature: qml_type_loader_thread (from target Qt6::Qml)
+QT_FEATURE_qml_type_loader_thread:INTERNAL=ON
+//Qt feature: qml_worker_script (from target Qt6::Qml)
+QT_FEATURE_qml_worker_script:INTERNAL=ON
+//Qt feature: qml_xml_http_request (from target Qt6::Qml)
+QT_FEATURE_qml_xml_http_request:INTERNAL=ON
+//Qt feature: qml_xmllistmodel (from target Qt6::Qml)
+QT_FEATURE_qml_xmllistmodel:INTERNAL=ON
 //Qt feature: qqnx_imf (from target Qt6::Gui)
 QT_FEATURE_qqnx_imf:INTERNAL=OFF
 //Qt feature: qqnx_pps (from target Qt6::Core)
 QT_FEATURE_qqnx_pps:INTERNAL=OFF
 //Qt feature: qtgui_threadpool (from target Qt6::Gui)
 QT_FEATURE_qtgui_threadpool:INTERNAL=ON
+//Qt feature: quick_animatedimage (from target Qt6::Quick)
+QT_FEATURE_quick_animatedimage:INTERNAL=ON
+//Qt feature: quick_canvas (from target Qt6::Quick)
+QT_FEATURE_quick_canvas:INTERNAL=ON
+//Qt feature: quick_designer (from target Qt6::Quick)
+QT_FEATURE_quick_designer:INTERNAL=ON
+//Qt feature: quick_draganddrop (from target Qt6::Quick)
+QT_FEATURE_quick_draganddrop:INTERNAL=ON
+//Qt feature: quick_flipable (from target Qt6::Quick)
+QT_FEATURE_quick_flipable:INTERNAL=ON
+//Qt feature: quick_gridview (from target Qt6::Quick)
+QT_FEATURE_quick_gridview:INTERNAL=ON
+//Qt feature: quick_itemview (from target Qt6::Quick)
+QT_FEATURE_quick_itemview:INTERNAL=ON
+//Qt feature: quick_listview (from target Qt6::Quick)
+QT_FEATURE_quick_listview:INTERNAL=ON
+//Qt feature: quick_particles (from target Qt6::Quick)
+QT_FEATURE_quick_particles:INTERNAL=ON
+//Qt feature: quick_path (from target Qt6::Quick)
+QT_FEATURE_quick_path:INTERNAL=ON
+//Qt feature: quick_pathview (from target Qt6::Quick)
+QT_FEATURE_quick_pathview:INTERNAL=ON
+//Qt feature: quick_pixmap_cache_threaded_download (from target
+// Qt6::Quick)
+QT_FEATURE_quick_pixmap_cache_threaded_download:INTERNAL=ON
+//Qt feature: quick_positioners (from target Qt6::Quick)
+QT_FEATURE_quick_positioners:INTERNAL=ON
+//Qt feature: quick_repeater (from target Qt6::Quick)
+QT_FEATURE_quick_repeater:INTERNAL=ON
+//Qt feature: quick_shadereffect (from target Qt6::Quick)
+QT_FEATURE_quick_shadereffect:INTERNAL=ON
+//Qt feature: quick_sprite (from target Qt6::Quick)
+QT_FEATURE_quick_sprite:INTERNAL=ON
+//Qt feature: quick_tableview (from target Qt6::Quick)
+QT_FEATURE_quick_tableview:INTERNAL=ON
+//Qt feature: quick_treeview (from target Qt6::Quick)
+QT_FEATURE_quick_treeview:INTERNAL=ON
+//Qt feature: quick_viewtransitions (from target Qt6::Quick)
+QT_FEATURE_quick_viewtransitions:INTERNAL=ON
+//Qt feature: quickcontrols2_basic (from target Qt6::QuickControls2)
+QT_FEATURE_quickcontrols2_basic:INTERNAL=ON
+//Qt feature: quickcontrols2_fluentwinui3 (from target Qt6::QuickControls2)
+QT_FEATURE_quickcontrols2_fluentwinui3:INTERNAL=ON
+//Qt feature: quickcontrols2_fusion (from target Qt6::QuickControls2)
+QT_FEATURE_quickcontrols2_fusion:INTERNAL=ON
+//Qt feature: quickcontrols2_imagine (from target Qt6::QuickControls2)
+QT_FEATURE_quickcontrols2_imagine:INTERNAL=ON
+//Qt feature: quickcontrols2_ios (from target Qt6::QuickControls2)
+QT_FEATURE_quickcontrols2_ios:INTERNAL=OFF
+//Qt feature: quickcontrols2_macos (from target Qt6::QuickControls2)
+QT_FEATURE_quickcontrols2_macos:INTERNAL=OFF
+//Qt feature: quickcontrols2_material (from target Qt6::QuickControls2)
+QT_FEATURE_quickcontrols2_material:INTERNAL=ON
+//Qt feature: quickcontrols2_universal (from target Qt6::QuickControls2)
+QT_FEATURE_quickcontrols2_universal:INTERNAL=ON
+//Qt feature: quickcontrols2_windows (from target Qt6::QuickControls2)
+QT_FEATURE_quickcontrols2_windows:INTERNAL=ON
+//Qt feature: quicktemplates2_calendar (from target Qt6::QuickTemplates2)
+QT_FEATURE_quicktemplates2_calendar:INTERNAL=ON
+//Qt feature: quicktemplates2_container (from target Qt6::QuickTemplates2)
+QT_FEATURE_quicktemplates2_container:INTERNAL=ON
+//Qt feature: quicktemplates2_hover (from target Qt6::QuickTemplates2)
+QT_FEATURE_quicktemplates2_hover:INTERNAL=ON
+//Qt feature: quicktemplates2_multitouch (from target Qt6::QuickTemplates2)
+QT_FEATURE_quicktemplates2_multitouch:INTERNAL=ON
 //Qt feature: radiobutton (from target Qt6::Widgets)
 QT_FEATURE_radiobutton:INTERNAL=ON
 //Qt feature: raster_64bit (from target Qt6::Gui)
@@ -1517,4 +1696,5 @@ ZLIB_LIBRARY_RELEASE-ADVANCED:INTERNAL=1
 _CMAKE_LINKER_PUSHPOP_STATE_SUPPORTED:INTERNAL=TRUE
 //CMAKE_INSTALL_PREFIX during last run
 _GNUInstallDirs_LAST_CMAKE_INSTALL_PREFIX:INTERNAL=C:/Program Files (x86)/kylin-messenger
+__qt_qml_macros_module_base_dir:INTERNAL=D:/Qt/6.9.3/mingw_64/lib/cmake/Qt6Qml
 

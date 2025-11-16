@@ -257,7 +257,6 @@ E:/Project/hmllm/kylin-messenger/build-win/kylin-messenger-core_autogen/include/
   D:/Qt/6.9.3/mingw_64/include/QtNetwork/qtnetworkexports.h \
   D:/Qt/6.9.3/mingw_64/include/QtNetwork/qtnetworkglobal.h \
   D:/Qt/6.9.3/mingw_64/include/QtNetwork/qudpsocket.h \
-  D:/Qt/6.9.3/mingw_64/include/QtWidgets/QDialog \
   D:/Qt/6.9.3/mingw_64/include/QtWidgets/QFileDialog \
   D:/Qt/6.9.3/mingw_64/include/QtWidgets/QFrame \
   D:/Qt/6.9.3/mingw_64/include/QtWidgets/QGridLayout \
@@ -565,5 +564,4 @@ E:/Project/hmllm/kylin-messenger/build-win/kylin-messenger-core_autogen/include/
   E:/Project/hmllm/kylin-messenger/include/network/payload_tags.h \
   E:/Project/hmllm/kylin-messenger/include/network_manager.h \
   E:/Project/hmllm/kylin-messenger/include/network_protocol.h \
-  E:/Project/hmllm/kylin-messenger/include/qt_compat.h \
-  E:/Project/hmllm/kylin-messenger/include/ui/file_transfer_dialog.h
+  E:/Project/hmllm/kylin-messenger/include/qt_compat.h

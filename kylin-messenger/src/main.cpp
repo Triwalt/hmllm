@@ -1,5 +1,6 @@
 // main.cpp - 应用程序入口
 #include <QApplication>
+#include <QCommandLineParser>
 #include <QMessageBox>
 #include <QDebug>
 #include <QDateTime>
@@ -13,6 +14,9 @@
 #include <QMutexLocker>
 #include <QStandardPaths>
 #include <QTextStream>
+#include <QQmlApplicationEngine>
+#include <QQmlContext>
+#include <QQuickStyle>
 #include <cstdio>
 #include <QCoreApplication>
 #include <memory>
@@ -27,11 +31,14 @@
 #include "core/logging.h"
 #include "core/di/service_locator.h"
 #include "core/repositories/message_repository.h"
+#include "core/repositories/contact_repository.h"
 // 新增轻量级组件
 #include "core/micro_kernel.h"
 #include "ai/opencv_nsfw_detector.h"
 #include "network/lightweight_discovery.h"
 #include "transfer/concurrent_file_transfer.h"
+#include "ui/quick_app_host.h"
+#include "ui/modern_style.h"
 
 using namespace KylinMessenger;
 
@@ -144,6 +151,28 @@ int main(int argc, char* argv[])
 {
     setupLogging();
     QApplication app(argc, argv);
+    KylinMessenger::UI::applyModernStyle(app);
+
+    QCommandLineParser parser;
+    parser.setApplicationDescription(QStringLiteral("Kylin Messenger"));
+    parser.addHelpOption();
+    parser.addVersionOption();
+    const QCommandLineOption classicUiOption(
+        QStringList{QStringLiteral("c"), QStringLiteral("classic-ui")},
+        QObject::tr("使用传统桌面界面"));
+    const QCommandLineOption quickUiOption(
+        QStringList{QStringLiteral("q"), QStringLiteral("quick-ui")},
+        QObject::tr("强制使用 Qt Quick 界面"));
+    parser.addOption(classicUiOption);
+    parser.addOption(quickUiOption);
+    parser.process(app);
+    bool quickUiMode = true;
+    if (parser.isSet(classicUiOption)) {
+        quickUiMode = false;
+    } else if (parser.isSet(quickUiOption)) {
+        quickUiMode = true;
+    }
+
     Core::Logging::initialize();
     auto& locator = Core::DI::ServiceLocator::instance();
 
@@ -154,9 +183,7 @@ int main(int argc, char* argv[])
     Q_INIT_RESOURCE(icons);
     Q_INIT_RESOURCE(emojis);
     Q_INIT_RESOURCE(themes);
-#ifdef ENABLE_NSFW
-    Q_INIT_RESOURCE(scripts);
-#endif
+    Q_INIT_RESOURCE(qml);
     
     // 设置应用程序信息
     QApplication::setApplicationName("Kylin Messenger");
@@ -184,13 +211,14 @@ int main(int argc, char* argv[])
     auto concurrent_transfer = std::make_shared<Transfer::ConcurrentFileTransfer>();
 
 #ifdef ENABLE_AI_FEATURES
+    std::shared_ptr<AI::LightweightNSFWDetector> opencv_nsfw_detector;
     // 创建OpenCV NSFW检测器（如果可用）
     try {
         auto nsfw_config = AI::NSFWDetectorConfig::fromEnvironment();
         auto opencv_nsfw = std::make_shared<AI::LightweightNSFWDetector>(
             nsfw_config.modelPath, nsfw_config.threshold);
         if (opencv_nsfw->isAvailable()) {
-            main_window->setNSFWDetector(opencv_nsfw);
+            opencv_nsfw_detector = opencv_nsfw;
             qInfo() << "OpenCV NSFW检测器初始化成功";
         } else {
             qWarning() << "OpenCV NSFW检测器不可用";
@@ -233,6 +261,8 @@ int main(int argc, char* argv[])
 
     auto message_repository = std::make_shared<Core::Repositories::InMemoryMessageRepository>();
     locator.registerService<Core::Repositories::MessageRepository>(message_repository);
+    auto contact_repository = std::make_shared<Core::Repositories::SettingsContactRepository>();
+    locator.registerService<Core::Repositories::IContactRepository>(contact_repository);
 
     // 创建AI服务
     std::shared_ptr<IAIService> ai_service;
@@ -272,7 +302,6 @@ int main(int argc, char* argv[])
 #endif
 
     qInfo() << "初始化合规审查服务...";
-    qInfo() << "[main] 准备创建主窗口";
 #ifdef ENABLE_NSFW
     {
         const QString backend = QString::fromLocal8Bit(qgetenv("KYLIN_NSFW_BACKEND")).trimmed().toLower();
@@ -314,37 +343,76 @@ int main(int argc, char* argv[])
         qWarning() << "合规审查服务当前不可用，所有消息将直接放行";
     }
     
-    // 创建主窗口（支持微内核架构）
-    qInfo() << "[main] 开始创建 MainWindow 对象";
-    MainWindow main_window(micro_kernel.get());  // 传递微内核实例
-    qInfo() << "[main] MainWindow 对象创建完成";
+    int result = 0;
 
-    qInfo() << "[main] 设置 NetworkManager";
-    main_window.setNetworkManager(network_manager.get());
-    qInfo() << "[main] NetworkManager 设置完成";
+    if (quickUiMode) {
+        qInfo() << "[main] 以 Qt Quick 界面启动";
+        QQuickStyle::setStyle(QStringLiteral("Fusion"));
 
-    // 设置轻量级服务
-    qInfo() << "[main] 设置轻量级服务";
-    main_window.setLightweightDiscovery(lightweight_discovery);
-    main_window.setConcurrentFileTransfer(concurrent_transfer);
+        QuickAppHost quick_host;
+    quick_host.setMessageRepository(message_repository);
+    quick_host.setContactRepository(contact_repository);
+        quick_host.setNetworkManager(network_manager.get());
+        quick_host.refreshOnlineUsers();
 
-    if (ai_service) {
-        qInfo() << "[main] 设置 AIService";
-        main_window.setAIService(ai_service);
+        QQmlApplicationEngine engine;
+        engine.rootContext()->setContextProperty(QStringLiteral("appHost"), &quick_host);
+        const QUrl quick_ui_url(QStringLiteral("qrc:/qml/Main.qml"));
+        QObject::connect(&engine,
+                         &QQmlApplicationEngine::objectCreated,
+                         &app,
+                         [quick_ui_url](QObject* obj, const QUrl& url) {
+                             if (!obj && url == quick_ui_url) {
+                                 QCoreApplication::exit(-1);
+                             }
+                         },
+                         Qt::QueuedConnection);
+        engine.load(quick_ui_url);
+
+        if (engine.rootObjects().isEmpty()) {
+            qCritical() << "加载 Qt Quick 界面失败";
+            return 1;
+        }
+
+        qInfo() << "Qt Quick 界面已就绪";
+        result = app.exec();
+    } else {
+        qInfo() << "[main] 开始创建 MainWindow 对象";
+        MainWindow main_window(micro_kernel.get());  // 传递微内核实例
+        qInfo() << "[main] MainWindow 对象创建完成";
+
+#ifdef ENABLE_AI_FEATURES
+        if (opencv_nsfw_detector) {
+            main_window.setNSFWDetector(opencv_nsfw_detector);
+        }
+#endif
+
+        qInfo() << "[main] 设置 NetworkManager";
+        main_window.setNetworkManager(network_manager.get());
+        qInfo() << "[main] NetworkManager 设置完成";
+
+        // 设置轻量级服务
+        qInfo() << "[main] 设置轻量级服务";
+        main_window.setLightweightDiscovery(lightweight_discovery);
+        main_window.setConcurrentFileTransfer(concurrent_transfer);
+
+        if (ai_service) {
+            qInfo() << "[main] 设置 AIService";
+            main_window.setAIService(ai_service);
+        }
+        if (compliance_service) {
+            qInfo() << "[main] 设置 ComplianceService";
+            main_window.setComplianceService(compliance_service);
+        }
+        
+        qInfo() << "[main] 显示主窗口";
+        main_window.show();
+        
+        qInfo() << "主窗口已显示";
+        qInfo() << "应用程序就绪";
+        
+        result = app.exec();
     }
-    if (compliance_service) {
-        qInfo() << "[main] 设置 ComplianceService";
-        main_window.setComplianceService(compliance_service);
-    }
-    
-    qInfo() << "[main] 显示主窗口";
-    main_window.show();
-    
-    qInfo() << "主窗口已显示";
-    qInfo() << "应用程序就绪";
-    
-    // 运行应用程序
-    int result = app.exec();
     
     // 清理
     qInfo() << "应用程序退出，清理资源...";
@@ -352,6 +420,7 @@ int main(int argc, char* argv[])
     Q_CLEANUP_RESOURCE(themes);
     Q_CLEANUP_RESOURCE(emojis);
     Q_CLEANUP_RESOURCE(icons);
+    Q_CLEANUP_RESOURCE(qml);
 #ifdef ENABLE_NSFW
     Q_CLEANUP_RESOURCE(scripts);
 #endif

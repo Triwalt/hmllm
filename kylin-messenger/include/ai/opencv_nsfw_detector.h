@@ -1,24 +1,18 @@
 /**
  * @file opencv_nsfw_detector.h
- * @brief 轻量级NSFW检测器（OpenCV+ONNX）
+ * @brief 轻量级NSFW检测器（TensorFlow Lite）
  * @version 1.0.0
  */
 
 #ifndef KYLIN_MESSENGER_AI_OPENCV_NSFW_DETECTOR_H
 #define KYLIN_MESSENGER_AI_OPENCV_NSFW_DETECTOR_H
 
+#include <QByteArray>
 #include <QImage>
 #include <optional>
 #include <memory>
 #include <string>
-
-// 前向声明，避免直接依赖OpenCV头文件
-namespace cv {
-    class Mat;
-    namespace dnn {
-        class Net;
-    }
-}
+#include <vector>
 
 namespace KylinMessenger::AI {
 
@@ -42,10 +36,12 @@ class LightweightNSFWDetector {
 public:
     /**
      * @brief 构造函数
-     * @param modelPath ONNX模型路径
+     * @param modelPath TFLite 模型路径
      * @param threshold 检测阈值（默认0.75）
      */
     explicit LightweightNSFWDetector(const std::string& modelPath, float threshold = 0.75f);
+
+    explicit LightweightNSFWDetector(struct NSFWDetectorConfig config);
     
     /**
      * @brief 析构函数
@@ -94,11 +90,6 @@ private:
     std::string modelPath_;
     float threshold_;
     bool available_ = false;
-    
-    // 辅助方法
-    cv::Mat convertQImageToMat(const QImage& image);
-    cv::Mat preprocessImage(const cv::Mat& image);
-    NSFWResult runInference(const cv::Mat& inputBlob);
 };
 
 /**
@@ -109,7 +100,10 @@ struct NSFWDetectorConfig {
     float threshold = 0.75f;
     int inputWidth = 224;
     int inputHeight = 224;
+    int numThreads = 2;
     bool useGPU = false;  // 默认CPU推理
+    std::string tfliteRuntimePath;
+    std::string gpuDelegatePath;
     
     static NSFWDetectorConfig fromEnvironment();
 };
